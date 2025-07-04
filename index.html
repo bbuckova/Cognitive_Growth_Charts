@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cognitive Normative Models</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>Cognitive Models</h1>
+                <p>Normative Analysis Dashboard</p>
+            </div>
+            
+            <nav id="navigation">
+                <!-- Navigation will be populated by JavaScript -->
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="header">
+                <h2 id="main-title">Welcome to Cognitive Normative Models</h2>
+                <p id="main-subtitle">Explore interactive visualizations of cognitive assessment normative data</p>
+            </div>
+
+            <div class="controls" id="controls" style="display: none;">
+                <button class="control-btn" onclick="DataManager.exportData()">Export Data</button>
+                <button class="control-btn" onclick="DataManager.exportModel()">Export Model</button>
+                <button class="control-btn" onclick="ChartManager.exportImages()">Export Images</button>
+                <button class="control-btn" onclick="ChartManager.resetView()">Reset View</button>
+            </div>
+
+            <div id="content-area">
+                <!-- Content will be loaded here -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Load JavaScript modules -->
+    <script src="js/data.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
