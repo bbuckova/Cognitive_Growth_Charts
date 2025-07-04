@@ -1,0 +1,56 @@
+[
+    {
+      "id": "working_memory",
+      "name": "Working Memory",
+      "description": "Digit span and spatial working memory tasks",
+      "sample_size": 1250,
+      "age_range": "18-85",
+      "measures": ["Digit Span Forward", "Digit Span Backward", "Spatial Span"],
+      "publication": "Smith et al. (2024)"
+    },
+    {
+      "id": "attention",
+      "name": "Sustained Attention",
+      "description": "Continuous performance and vigilance tasks",
+      "sample_size": 980,
+      "age_range": "20-80",
+      "measures": ["CPT-3", "SART", "Attention Network Test"],
+      "publication": "Jones et al. (2023)"
+    },
+    {
+      "id": "executive_function",
+      "name": "Executive Function",
+      "description": "Cognitive flexibility and inhibitory control",
+      "sample_size": 1100,
+      "age_range": "18-75",
+      "measures": ["Stroop Test", "Trail Making Test", "Wisconsin Card Sort"],
+      "publication": "Brown et al. (2024)"
+    },
+    {
+      "id": "processing_speed",
+      "name": "Processing Speed",
+      "description": "Speed of cognitive processing tasks",
+      "sample_size": 1350,
+      "age_range": "16-90",
+      "measures": ["Symbol Search", "Coding", "Simple Reaction Time"],
+      "publication": "Davis et al. (2023)"
+    },
+    {
+      "id": "verbal_fluency",
+      "name": "Verbal Fluency",
+      "description": "Phonemic and semantic fluency tasks",
+      "sample_size": 890,
+      "age_range": "18-85",
+      "measures": ["FAS Test", "Category Fluency", "Action Fluency"],
+      "publication": "Wilson et al. (2024)"
+    },
+    {
+      "id": "memory_recall",
+      "name": "Memory Recall",
+      "description": "Episodic and semantic memory assessment",
+      "sample_size": 1150,
+      "age_range": "20-80",
+      "measures": ["Word List Learning", "Story Recall", "Figure Recall"],
+      "publication": "Taylor et al. (2023)"
+    }
+  ]
