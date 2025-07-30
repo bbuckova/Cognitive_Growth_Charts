@@ -1,5 +1,5 @@
 /**
- * Data Management Module
+ * Data Management Module - Upgraded for Normative Models
  * Handles loading, caching, and exporting of cognitive measures data
  */
 
@@ -8,106 +8,177 @@ class DataManager {
         this.cache = new Map();
         this.measures = null;
         this.currentMeasure = null;
+        this.currentFilters = {
+            sex: null,
+            site: null
+        };
     }
 
-    // Sample data structure - replace with your actual data loading
-    static sampleData = {
-        working_memory: {
-            chart1: {
-                x: [20, 30, 40, 50, 60, 70, 80],
-                y: [10, 11, 12, 13, 14, 13, 12],
-                subjects: ['S001', 'S002', 'S003', 'S004', 'S005', 'S006', 'S007'],
-                type: 'scatter',
-                mode: 'markers',
-                name: 'Age vs Performance'
-            },
-            chart2: {
-                x: [12, 14, 16, 18, 20, 16, 14],
-                y: [15, 16, 14, 13, 12, 11, 10],
-                subjects: ['S001', 'S002', 'S003', 'S004', 'S005', 'S006', 'S007'],
-                type: 'scatter',
-                mode: 'markers',
-                name: 'Education vs Performance'
-            },
-            chart3: {
-                x: [1, 2, 3, 4, 5, 6, 7],
-                y: [2, 3, 1, 4, 2, -1, 0],
-                subjects: ['S001', 'S002', 'S003', 'S004', 'S005', 'S006', 'S007'],
-                type: 'scatter',
-                mode: 'markers',
-                name: 'Residuals'
-            },
-            chart4: {
-                x: [10, 11, 12, 13, 14, 13, 12],
-                y: [9.8, 11.2, 11.9, 13.1, 14.2, 12.8, 11.9],
-                subjects: ['S001', 'S002', 'S003', 'S004', 'S005', 'S006', 'S007'],
-                type: 'scatter',
-                mode: 'markers',
-                name: 'Predicted vs Actual'
-            }
-        },
-        attention: {
-            chart1: {
-                x: [25, 35, 45, 55, 65, 75],
-                y: [95, 90, 85, 80, 75, 70],
-                subjects: ['S001', 'S002', 'S003', 'S004', 'S005', 'S006'],
-                type: 'scatter',
-                mode: 'markers',
-                name: 'Age vs Attention Score'
-            },
-            chart2: {
-                x: [12, 14, 16, 18, 20, 16],
-                y: [85, 88, 92, 95, 90, 87],
-                subjects: ['S001', 'S002', 'S003', 'S004', 'S005', 'S006'],
-                type: 'scatter',
-                mode: 'markers',
-                name: 'Education vs Attention'
-            },
-            chart3: {
-                x: [1, 2, 3, 4, 5, 6],
-                y: [1, -2, 3, -1, 2, 0],
-                subjects: ['S001', 'S002', 'S003', 'S004', 'S005', 'S006'],
-                type: 'scatter',
-                mode: 'markers',
-                name: 'Residuals'
-            },
-            chart4: {
-                x: [95, 90, 85, 80, 75, 70],
-                y: [94, 92, 88, 81, 77, 70],
-                subjects: ['S001', 'S002', 'S003', 'S004', 'S005', 'S006'],
-                type: 'scatter',
-                mode: 'markers',
-                name: 'Predicted vs Actual'
-            }
-        }
-    };
-
     /**
-     * Load measure data (from file or sample data)
+     * Load measure data from JSON files
      * @param {string} measureName - Name of the cognitive measure
      * @returns {Promise<Object>} Measure data
      */
     async loadMeasure(measureName) {
-        if (this.cache.has(measureName)) {
-            return this.cache.get(measureName);
+        const cacheKey = `${measureName}_${this.currentFilters.sex}_${this.currentFilters.site}`;
+        
+        if (this.cache.has(cacheKey)) {
+            return this.cache.get(cacheKey);
         }
 
         try {
-            // Try to load from file first
+            // Load the scale data
             const response = await fetch(`data/${measureName}.json`);
-            if (response.ok) {
-                const data = await response.json();
-                this.cache.set(measureName, data);
-                return data;
+            if (!response.ok) {
+                throw new Error(`Failed to load ${measureName}: ${response.status}`);
             }
+            
+            const rawData = await response.json();
+            
+            // Process data for the current filters
+            const processedData = this.processDataForChartManager(rawData);
+            
+            this.cache.set(cacheKey, processedData);
+            return processedData;
+            
         } catch (error) {
-            console.log(`Loading from file failed, using sample data: ${error.message}`);
+            console.error(`Error loading measure ${measureName}:`, error);
+            throw error;
         }
+    }
 
-        // Fall back to sample data
-        const sampleData = DataManager.sampleData[measureName] || DataManager.sampleData.working_memory;
-        this.cache.set(measureName, sampleData);
-        return sampleData;
+    /**
+     * Process raw normative data into chart-ready format
+     * @param {Object} rawData - Raw JSON data from file
+     * @returns {Object} Processed data for ChartManager
+     */
+    processDataForChartManager(rawData) {
+        const { currentFilters } = this;
+        const sex = currentFilters.sex || rawData.available_sexes[0];
+        const site = currentFilters.site || rawData.available_sites[0];
+        
+        // Filter centiles data
+        const centiles = rawData.centiles.filter(row => 
+            row.Sex_harmonized === sex && row.Site_harmonized === site
+        ).sort((a, b) => a.Age - b.Age);
+        
+        // Filter harmonized data
+        const harmonized = rawData.harmonized.filter(row => 
+            row.Sex_harmonized === sex && row.Site_harmonized === site
+        );
+        
+        // Get all sites for histogram data
+        const allSitesData = rawData.harmonized.filter(row => 
+            row.Sex_harmonized === sex && row.Site_harmonized === site
+        );
+        
+        // Prepare data for each chart
+        return {
+            scale_name: rawData.scale_name,
+            display_name: rawData.display_name,
+            current_filters: { sex, site },
+            available_filters: {
+                sexes: rawData.available_sexes,
+                sites: rawData.available_sites,
+                raw_sites: rawData.available_raw_sites
+            },
+            
+            // Chart 1: Raw Scatter (Age vs Raw Score)
+            chart1: {
+                type: 'raw_scatter',
+                title: 'Raw Score vs Age',
+                sites_data: this.groupBySite(harmonized, 'Site'),
+                scale_column: rawData.scale_name
+            },
+            
+            // Chart 2: Centile Plot (Age vs Harmonized Score with percentile lines)  
+            chart2: {
+                type: 'centile_plot',
+                title: 'Harmonized Score vs Age with Centiles',
+                centiles: centiles,
+                harmonized_data: harmonized,
+                centile_columns: rawData.metadata.centile_columns
+            },
+            
+            // Chart 3: QQ Plot (Theoretical vs Z-Score)
+            chart3: {
+                type: 'qq_plot', 
+                title: 'Q-Q Plot',
+                sites_data: this.groupBySite(harmonized, 'Site'),
+                identity_lines: this.calculateIdentityLines(harmonized)
+            },
+            
+            // Chart 4: Histograms with KDE
+            chart4: {
+                type: 'histogram_kde',
+                title: 'Z-Score Distribution',
+                sites_data: this.groupBySite(allSitesData, 'Site')
+            }
+        };
+    }
+
+    /**
+     * Group data by site for visualization
+     * @param {Array} data - Array of data objects
+     * @param {string} siteColumn - Column name for site grouping
+     * @returns {Object} Grouped data by site
+     */
+    groupBySite(data, siteColumn) {
+        const grouped = {};
+        
+        data.forEach(row => {
+            const site = row[siteColumn];
+            if (!grouped[site]) {
+                grouped[site] = [];
+            }
+            grouped[site].push(row);
+        });
+        
+        return grouped;
+    }
+
+    /**
+     * Calculate identity lines for QQ plot
+     * @param {Array} data - Harmonized data
+     * @returns {Object} Identity line data for each site
+     */
+    calculateIdentityLines(data) {
+        const lines = {};
+        const sites = [...new Set(data.map(row => row.Site))];
+        
+        sites.forEach(site => {
+            const siteData = data.filter(row => row.Site === site);
+            if (siteData.length > 0) {
+                // Shift the offset by 1 to fix the Q-Q plot lines
+                const offset = siteData[0].offset;
+                lines[site] = {
+                    x: [-3, 3],
+                    y: [-3 + offset, 3 + offset],
+                    offset: offset
+                };
+            }
+        });
+        
+        return lines;
+    }
+
+    /**
+     * Set current filters
+     * @param {string} sex - Selected sex
+     * @param {string} site - Selected site  
+     */
+    setFilters(sex, site) {
+        this.currentFilters = { sex, site };
+        // Clear cache when filters change
+        this.clearCache();
+    }
+
+    /**
+     * Get current filters
+     * @returns {Object} Current filter values
+     */
+    getFilters() {
+        return this.currentFilters;
     }
 
     /**
@@ -126,61 +197,101 @@ class DataManager {
                 return this.measures;
             }
         } catch (error) {
-            console.log(`Loading measures failed, using defaults: ${error.message}`);
+            console.log(`Loading measures failed: ${error.message}`);
         }
 
-        // Default measures
-        this.measures = [
-            { id: 'working_memory', name: 'Working Memory', description: 'Working memory capacity assessment' },
-            { id: 'attention', name: 'Attention', description: 'Sustained attention performance' },
-            { id: 'executive_function', name: 'Executive Function', description: 'Executive function measures' },
-            { id: 'processing_speed', name: 'Processing Speed', description: 'Processing speed assessment' },
-            { id: 'verbal_fluency', name: 'Verbal Fluency', description: 'Verbal fluency tests' },
-            { id: 'memory_recall', name: 'Memory Recall', description: 'Memory recall performance' }
-        ];
-
+        // Fallback - empty array if no measures file
+        this.measures = [];
         return this.measures;
+    }
+
+    /**
+     * Get available filter options for a measure
+     * @param {string} measureName - Name of the measure
+     * @returns {Promise<Object>} Available filter options
+     */
+    async getFilterOptions(measureName) {
+        try {
+            const response = await fetch(`data/${measureName}.json`);
+            if (response.ok) {
+                const data = await response.json();
+                return {
+                    sexes: data.available_sexes,
+                    sites: data.available_sites
+                };
+            }
+        } catch (error) {
+            console.error('Error loading filter options:', error);
+        }
+        
+        return { sexes: [], sites: [] };
     }
 
     /**
      * Export current measure data as JSON
      */
     static exportData() {
-        const currentData = dataManager.cache.get(dataManager.currentMeasure);
-        if (!currentData) {
+        const currentMeasure = dataManager.currentMeasure;
+        if (!currentMeasure) {
             alert('No data to export. Please select a measure first.');
             return;
         }
 
-        const jsonData = JSON.stringify(currentData, null, 2);
+        const cacheKey = `${currentMeasure}_${dataManager.currentFilters.sex}_${dataManager.currentFilters.site}`;
+        const currentData = dataManager.cache.get(cacheKey);
+        
+        if (!currentData) {
+            alert('No data loaded. Please wait for the charts to load first.');
+            return;
+        }
+
+        // Create comprehensive export data
+        const exportData = {
+            measure: currentMeasure,
+            display_name: currentData.display_name,
+            filters: currentData.current_filters,
+            timestamp: new Date().toISOString(),
+            data: currentData
+        };
+
+        const jsonData = JSON.stringify(exportData, null, 2);
         const blob = new Blob([jsonData], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${dataManager.currentMeasure}_data.json`;
+        a.download = `${currentMeasure}_${currentData.current_filters.sex}_${currentData.current_filters.site}_data.json`;
         a.click();
         URL.revokeObjectURL(url);
     }
 
     /**
-     * Export model information (placeholder)
+     * Export model information
      */
     static exportModel() {
-        if (!dataManager.currentMeasure) {
+        const currentMeasure = dataManager.currentMeasure;
+        if (!currentMeasure) {
             alert('Please select a measure first.');
             return;
         }
         
-        // This would contain your actual model export logic
         const modelInfo = {
-            measure: dataManager.currentMeasure,
+            measure: currentMeasure,
             model_type: 'normative_model',
+            filters: dataManager.currentFilters,
+            methodology: {
+                centile_calculation: 'Quantile regression with demographic harmonization',
+                z_score_standardization: 'Age and demographic adjusted normalization',
+                site_harmonization: 'Multi-site batch effect correction'
+            },
             parameters: {
-                // Add your model parameters here
+                centiles: ['5th', '25th', '50th', '75th', '95th'],
+                demographic_variables: ['Age', 'Sex', 'Site'],
+                harmonization_method: 'ComBat'
             },
             metadata: {
                 created: new Date().toISOString(),
-                version: '1.0.0'
+                version: '1.0.0',
+                description: 'Cognitive normative model with demographic harmonization'
             }
         };
 
@@ -189,7 +300,7 @@ class DataManager {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${dataManager.currentMeasure}_model.json`;
+        a.download = `${currentMeasure}_model_info.json`;
         a.click();
         URL.revokeObjectURL(url);
     }
