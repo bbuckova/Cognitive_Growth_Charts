@@ -1,5 +1,5 @@
 /**
- * Main Application Module
+ * Main Application Module - Upgraded for Normative Models
  * Handles navigation, page routing, and overall app coordination
  */
 
@@ -45,12 +45,12 @@ class App {
             </div>
             
             <div class="nav-section">
-                <h3>Cognitive Measures</h3>
-                ${measures.map(measure => `
+                <h3>Normative Models</h3>
+                ${measures.length > 0 ? measures.map(measure => `
                     <a href="#" class="nav-item" onclick="app.loadMeasure('${measure.id}')" title="${measure.description}">
                         ${measure.name}
                     </a>
-                `).join('')}
+                `).join('') : '<p style="color: #6b7280; font-size: 0.9rem; padding: 10px;">No measures available.<br><small>Convert your data using the Python script first.</small></p>'}
             </div>
         `;
     }
@@ -80,7 +80,7 @@ class App {
     async showIntroduction() {
         this.currentPage = 'introduction';
         this.updateHeader('Welcome to Cognitive Normative Models', 
-                         'Explore interactive visualizations of cognitive assessment normative data');
+                         'Explore interactive visualizations of cognitive assessment normative data with demographic harmonization');
         this.hideControls();
         
         try {
@@ -100,7 +100,7 @@ class App {
      */
     async showDocumentation() {
         this.currentPage = 'documentation';
-        this.updateHeader('Documentation', 'Detailed information about methods and data');
+        this.updateHeader('Documentation', 'Detailed information about normative modeling methods and data harmonization');
         this.hideControls();
         
         try {
@@ -123,29 +123,33 @@ class App {
         this.currentPage = `measure_${measureName}`;
         dataManager.setCurrentMeasure(measureName);
         
-        this.updateHeader(this.formatMeasureName(measureName), 
-                         'Interactive normative model visualization');
+        const displayName = this.formatMeasureName(measureName);
+        this.updateHeader(displayName, 
+                         'Interactive normative model with demographic harmonization and filtering');
         this.showControls();
         
         // Show loading state
         chartManager.showLoading();
         
         try {
-            // Create charts grid
+            // Cleanup previous charts
+            chartManager.cleanup();
+            
+            // Create charts grid with filter controls
             const contentArea = document.getElementById('content-area');
             contentArea.innerHTML = '';
             contentArea.appendChild(chartManager.createChartsGrid());
             
-            // Load charts
+            // Load charts with real data
             await chartManager.loadCharts(measureName);
             chartManager.updateChartTitles(measureName);
             
-            this.updateActiveNav(this.formatMeasureName(measureName));
+            this.updateActiveNav(displayName);
             this.updateURL('measure', measureName);
             
         } catch (error) {
             console.error('Error loading measure:', error);
-            chartManager.showError(`Failed to load ${measureName} data`);
+            chartManager.showError(`Failed to load ${displayName}: ${error.message}`);
         }
     }
 
@@ -170,19 +174,32 @@ class App {
         return `
             <div class="intro-content">
                 <h3>About This Dashboard</h3>
-                <p>This interactive dashboard presents normative models for various cognitive measures. Our research has developed comprehensive normative models that account for demographic variables and provide standardized reference points for cognitive assessment.</p>
+                <p>This interactive dashboard presents sophisticated normative models for cognitive measures with demographic harmonization. Our research has developed comprehensive normative models that account for demographic variables, site effects, and provide standardized reference points for cognitive assessment across diverse populations.</p>
                 
-                <h3>How to Use</h3>
-                <p>Select a cognitive measure from the left sidebar to view interactive visualizations. Each measure displays four coordinated charts showing different aspects of the normative model. Hover over data points to see detailed information and observe how the same subjects are highlighted across all charts.</p>
+                <h3>Key Features</h3>
+                <p><strong>4-Panel Dashboard:</strong> Each cognitive measure displays four coordinated visualizations:</p>
+                <p>• <strong>Raw Scatter Plot:</strong> Shows the relationship between age and raw cognitive scores</p>
+                <p>• <strong>Centile Plot:</strong> Displays harmonized scores with percentile reference lines (5th, 25th, 50th, 75th, 95th)</p>
+                <p>• <strong>Q-Q Plot:</strong> Quantile-quantile plot for assessing normality of standardized scores</p>
+                <p>• <strong>Distribution Plot:</strong> Histograms with KDE curves showing Z-score distributions</p>
                 
-                <h3>Features</h3>
-                <p>• Interactive cross-chart highlighting for subject tracking</p>
-                <p>• Export functionality for data, models, and visualizations</p>
-                <p>• Responsive design for desktop and mobile viewing</p>
-                <p>• Real-time data exploration and analysis</p>
+                <h3>Interactive Filtering</h3>
+                <p>• <strong>Sex & Site Filtering:</strong> View data for specific demographic groups and data collection sites</p>
+                <p>• <strong>Cross-chart Highlighting:</strong> Hover over data points to see the same subjects highlighted across all four charts</p>
+                <p>• <strong>Real-time Updates:</strong> Apply filters without page reloads for seamless exploration</p>
+                
+                <h3>Data Export & Analysis</h3>
+                <p>• Export filtered data as JSON for further analysis</p>
+                <p>• Download model parameters and metadata</p>
+                <p>• Export high-resolution chart images for publications</p>
+                <p>• Reset views and clear highlights with one click</p>
                 
                 <h3>Getting Started</h3>
-                <p>Click on any cognitive measure in the sidebar to begin exploring the normative data. The dashboard will load interactive visualizations that allow you to examine relationships between demographic variables and cognitive performance.</p>
+                <p>Select any cognitive measure from the sidebar to begin exploring. Use the Sex and Site filters in the dashboard to focus on specific populations. Hover over data points to see cross-chart highlighting and detailed information.</p>
+                
+                <div style="margin-top: 20px; padding: 15px; background: rgba(79, 70, 229, 0.1); border-radius: 8px; border-left: 4px solid #4f46e5;">
+                    <strong>Note:</strong> If no measures appear in the sidebar, make sure to run the Python data conversion script first to convert your CSV files to web-compatible JSON format.
+                </div>
             </div>
         `;
     }
@@ -194,26 +211,46 @@ class App {
     getDefaultDocsContent() {
         return `
             <div class="intro-content">
-                <h3>Methodology</h3>
-                <p>Our normative models were developed using advanced statistical techniques including regression modeling, generalized additive models, and machine learning approaches. Each model accounts for key demographic variables such as age, education, and gender.</p>
+                <h3>Normative Modeling Methodology</h3>
+                <p>Our normative models employ advanced statistical techniques including quantile regression, generalized additive models, and demographic harmonization methods. Each model accounts for key demographic variables and corrects for multi-site batch effects.</p>
                 
-                <h3>Data Sources</h3>
-                <p>The normative data is derived from a comprehensive dataset of cognitive assessments from healthy participants. All data has been anonymized and aggregated to protect participant privacy.</p>
+                <h3>Data Harmonization</h3>
+                <p><strong>ComBat Harmonization:</strong> Multi-site data undergoes batch effect correction using ComBat methodology to ensure comparability across different data collection sites.</p>
+                <p><strong>Demographic Adjustment:</strong> Models incorporate age, sex, and education effects through sophisticated regression techniques.</p>
+                <p><strong>Z-Score Standardization:</strong> Final scores are standardized using demographic-adjusted normative distributions.</p>
                 
                 <h3>Model Validation</h3>
-                <p>Each model underwent rigorous validation using cross-validation techniques and independent test datasets. Performance metrics and validation results are available in the research publications.</p>
+                <p>Each normative model underwent rigorous validation using:</p>
+                <p>• Cross-validation across multiple folds</p>
+                <p>• Independent test datasets</p>
+                <p>• Site-stratified validation to ensure generalizability</p>
+                <p>• Quantile regression validation for percentile accuracy</p>
+                
+                <h3>Dashboard Visualizations</h3>
+                <p><strong>Raw Scatter Plot (Top-Left):</strong> Shows the relationship between participant age and raw cognitive performance scores, colored by data collection site. This plot reveals the underlying age-performance relationship before harmonization.</p>
+                
+                <p><strong>Centile Plot (Top-Right):</strong> Displays harmonized cognitive scores plotted against age with overlaid percentile reference lines. The gray lines represent the 5th, 25th, 50th, 75th, and 95th percentiles of the normative distribution.</p>
+                
+                <p><strong>Q-Q Plot (Bottom-Left):</strong> Quantile-quantile plot comparing theoretical normal quantiles against observed Z-scores. Points falling along the diagonal line indicate good normality, while deviations suggest non-normal distributions.</p>
+                
+                <p><strong>Distribution Plot (Bottom-Right):</strong> Histograms of Z-scores with overlaid kernel density estimation (KDE) curves. This visualization shows the distribution shape of standardized scores for each site.</p>
+                
+                <h3>Interactive Features</h3>
+                <p><strong>Cross-Chart Highlighting:</strong> Hovering over any data point highlights the same subject across all four visualizations, enabling comprehensive subject-level analysis.</p>
+                
+                <p><strong>Filter Controls:</strong> Use the Sex and Site dropdown menus to focus analysis on specific demographic groups or data collection sites. Updates are applied in real-time without page reloads.</p>
+                
+                <p><strong>Export Functions:</strong> The dashboard provides multiple export options:</p>
+                <p>• <strong>Export Data:</strong> Download filtered dataset as JSON including all demographic and score information</p>
+                <p>• <strong>Export Model:</strong> Download model parameters, methodology details, and metadata</p>
+                <p>• <strong>Export Images:</strong> Save high-resolution PNG images of all four charts for publications</p>
+                <p>• <strong>Reset View:</strong> Clear all highlights and reset zoom levels across all charts</p>
                 
                 <h3>Technical Implementation</h3>
-                <p>This dashboard uses Plotly.js for interactive visualizations with coordinated highlighting across multiple charts. The underlying models are implemented in Python and exported for web visualization.</p>
+                <p>The dashboard uses Plotly.js for interactive visualizations with coordinated highlighting across multiple charts. The underlying normative models are implemented in Python and exported as JSON for web visualization. Real-time filtering is achieved through client-side data processing without server requests.</p>
                 
-                <h3>Chart Descriptions</h3>
-                <p><strong>Age vs Performance:</strong> Shows the relationship between participant age and cognitive performance scores.</p>
-                <p><strong>Education vs Performance:</strong> Displays how education level correlates with cognitive performance.</p>
-                <p><strong>Model Residuals:</strong> Visualizes the residuals from the normative model, helping identify outliers.</p>
-                <p><strong>Predicted vs Actual:</strong> Compares model predictions against actual observed scores.</p>
-                
-                <h3>Data Export</h3>
-                <p>Use the export buttons to download the underlying data, model parameters, or high-resolution chart images for use in publications or presentations.</p>
+                <h3>Data Privacy & Ethics</h3>
+                <p>All normative data has been anonymized and aggregated to protect participant privacy. Subject identifiers are randomized and contain no personally identifiable information. The models comply with research ethics guidelines for data sharing and visualization.</p>
             </div>
         `;
     }
@@ -300,9 +337,17 @@ class App {
      * @returns {string} Formatted name
      */
     formatMeasureName(name) {
-        return name.split('_').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1)
-        ).join(' ');
+        // Handle special formatting for cognitive measure names
+        return name
+            .split('_')
+            .map(word => {
+                // Handle special cases
+                if (word.toUpperCase() === 'NIH') return 'NIH';
+                if (word.toLowerCase() === 'rawscore') return 'Raw Score';
+                if (word.toLowerCase() === 'cardsort') return 'Card Sort';
+                return word.charAt(0).toUpperCase() + word.slice(1);
+            })
+            .join(' ');
     }
 
     /**
