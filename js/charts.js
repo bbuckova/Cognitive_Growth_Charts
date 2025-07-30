@@ -1,42 +1,90 @@
 /**
- * Chart Management Module
- * Handles chart creation, interaction, and cross-chart highlighting
+ * Chart Management Module - Upgraded for Normative Models Dashboard
+ * Handles creation of 4-panel dashboard with interactive filtering
  */
 
 class ChartManager {
     constructor() {
         this.highlightedSubject = null;
         this.charts = new Map();
+        this.colors = ['#39c0ba', '#f35b6a', '#fbb2b9', '#e2e7ee', '#2e3037'];
         this.chartConfig = {
-            chart1: { title: 'Age vs Performance', containerId: 'chart1' },
-            chart2: { title: 'Education vs Performance', containerId: 'chart2' },
-            chart3: { title: 'Model Residuals', containerId: 'chart3' },
-            chart4: { title: 'Predicted vs Actual', containerId: 'chart4' }
+            chart1: { title: 'Raw Score vs Age', containerId: 'chart1' },
+            chart2: { title: 'Harmonized Score vs Age with Centiles', containerId: 'chart2' },
+            chart3: { title: 'Q-Q Plot', containerId: 'chart3' },
+            chart4: { title: 'Z-Score Distribution', containerId: 'chart4' }
         };
     }
 
     /**
-     * Create the charts grid HTML
+     * Create the charts grid HTML with filter controls
      */
     createChartsGrid() {
         const grid = document.createElement('div');
-        grid.className = 'charts-grid';
         grid.innerHTML = `
-            <div class="chart-container">
-                <div class="chart-title">Age vs Performance</div>
-                <div id="chart1" class="chart"></div>
+            <!-- Filter Controls -->
+            <div id="filter-controls" style="
+                display: flex; 
+                gap: 15px; 
+                margin-bottom: 20px; 
+                padding: 15px; 
+                background: rgba(255, 255, 255, 0.9); 
+                border-radius: 10px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            ">
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #374151;">Sex:</label>
+                    <select id="sex-filter" style="
+                        padding: 8px 12px; 
+                        border: 1px solid #d1d5db; 
+                        border-radius: 6px; 
+                        background: white;
+                        font-size: 14px;
+                        min-width: 120px;
+                    ">
+                        <!-- Options populated by JavaScript -->
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #374151;">Site:</label>
+                    <select id="site-filter" style="
+                        padding: 8px 12px; 
+                        border: 1px solid #d1d5db; 
+                        border-radius: 6px; 
+                        background: white;
+                        font-size: 14px;
+                        min-width: 120px;
+                    ">
+                        <!-- Options populated by JavaScript -->
+                    </select>
+                </div>
+                <div style="display: flex; align-items: end;">
+                    <button id="update-filters" class="control-btn" style="
+                        padding: 8px 16px;
+                        margin: 0;
+                        font-size: 14px;
+                    ">Update</button>
+                </div>
             </div>
-            <div class="chart-container">
-                <div class="chart-title">Education vs Performance</div>
-                <div id="chart2" class="chart"></div>
-            </div>
-            <div class="chart-container">
-                <div class="chart-title">Model Residuals</div>
-                <div id="chart3" class="chart"></div>
-            </div>
-            <div class="chart-container">
-                <div class="chart-title">Predicted vs Actual</div>
-                <div id="chart4" class="chart"></div>
+            
+            <!-- Charts Grid -->
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-title">Raw Score vs Age</div>
+                    <div id="chart1" class="chart"></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Harmonized Score vs Age with Centiles</div>
+                    <div id="chart2" class="chart"></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Q-Q Plot</div>
+                    <div id="chart3" class="chart"></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Z-Score Distribution</div>
+                    <div id="chart4" class="chart"></div>
+                </div>
             </div>
         `;
         return grid;
@@ -48,86 +96,374 @@ class ChartManager {
      */
     async loadCharts(measureName) {
         try {
+            // Setup filter controls first
+            await this.setupFilterControls(measureName);
+            
             const data = await dataManager.loadMeasure(measureName);
             
-            // Create all four charts
-            Object.keys(this.chartConfig).forEach(chartKey => {
-                const chartData = data[chartKey];
-                const config = this.chartConfig[chartKey];
-                
-                if (chartData && config) {
-                    this.createChart(config.containerId, chartData, config.title);
-                }
-            });
+            // Create all four charts with real data
+            this.createRawScatterChart(data.chart1, data.scale_name);
+            this.createCentileChart(data.chart2);
+            this.createQQChart(data.chart3);
+            this.createHistogramChart(data.chart4);
 
             // Store reference for exports
             this.charts.set(measureName, data);
             
         } catch (error) {
             console.error('Error loading charts:', error);
-            this.showError('Failed to load chart data');
+            this.showError(`Failed to load ${measureName} data: ${error.message}`);
         }
     }
 
     /**
-     * Create individual chart
-     * @param {string} containerId - ID of the container element
-     * @param {Object} data - Chart data
-     * @param {string} title - Chart title
+     * Setup filter controls
+     * @param {string} measureName - Name of the measure
      */
-    createChart(containerId, data, title) {
-        const trace = {
-            x: data.x,
-            y: data.y,
-            mode: 'markers',
-            type: 'scatter',
-            name: data.name || title,
-            marker: {
-                size: 8,
-                color: '#4f46e5',
-                line: {
-                    color: '#ffffff',
-                    width: 1
-                }
-            },
-            subjects: data.subjects,
-            hovertemplate: '<b>Subject: %{customdata}</b><br>' +
-                          'X: %{x}<br>' +
-                          'Y: %{y}<br>' +
-                          '<extra></extra>',
-            customdata: data.subjects
-        };
+    async setupFilterControls(measureName) {
+        try {
+            const filterOptions = await dataManager.getFilterOptions(measureName);
+            const currentFilters = dataManager.getFilters();
+            
+            // Populate sex filter
+            const sexFilter = document.getElementById('sex-filter');
+            sexFilter.innerHTML = filterOptions.sexes.map(sex => 
+                `<option value="${sex}" ${sex === currentFilters.sex ? 'selected' : ''}>${sex}</option>`
+            ).join('');
+            
+            // Populate site filter  
+            const siteFilter = document.getElementById('site-filter');
+            siteFilter.innerHTML = filterOptions.sites.map(site => 
+                `<option value="${site}" ${site === currentFilters.site ? 'selected' : ''}>${site}</option>`
+            ).join('');
+            
+            // Add update button functionality
+            const updateButton = document.getElementById('update-filters');
+            updateButton.addEventListener('click', () => {
+                const newSex = sexFilter.value;
+                const newSite = siteFilter.value;
+                
+                updateButton.textContent = 'Updating...';
+                updateButton.disabled = true;
+                
+                dataManager.setFilters(newSex, newSite);
+                this.loadCharts(measureName).finally(() => {
+                    updateButton.textContent = 'Update';
+                    updateButton.disabled = false;
+                });
+            });
+            
+            // Set default filters if not set
+            if (!currentFilters.sex && filterOptions.sexes.length > 0) {
+                dataManager.setFilters(filterOptions.sexes[0], filterOptions.sites[0]);
+            }
+            
+        } catch (error) {
+            console.error('Error setting up filter controls:', error);
+        }
+    }
+
+    /**
+     * Create raw scatter chart (Chart 1: Age vs Raw Score)
+     * @param {Object} chartData - Chart data
+     * @param {string} scaleColumn - Name of the scale column
+     */
+    createRawScatterChart(chartData, scaleColumn) {
+        const traces = [];
+        const sites = Object.keys(chartData.sites_data);
+        
+        sites.forEach((site, index) => {
+            const siteData = chartData.sites_data[site];
+            const color = this.colors[index % this.colors.length];
+            
+            traces.push({
+                x: siteData.map(d => d.Age),
+                y: siteData.map(d => d[scaleColumn]),
+                mode: 'markers',
+                type: 'scatter',
+                name: site,
+                marker: {
+                    size: 8,
+                    color: color,
+                    opacity: 0.7
+                },
+                hovertemplate: '<b>%{text}</b><br>Age: %{x:.1f}<br>Raw: %{y:.1f}<br>Site: ' + site + '<extra></extra>',
+                text: siteData.map(d => d.subject_id || `S${d.Age?.toFixed(0)}_${site}`)
+            });
+        });
 
         const layout = {
-            margin: { l: 50, r: 40, t: 20, b: 50 },
-            showlegend: false,
+            margin: { l: 60, r: 40, t: 20, b: 50 },
+            showlegend: true,
+            legend: { x: 1.02, y: 1, bgcolor: 'rgba(0,0,0,0)', borderwidth: 0 },
             paper_bgcolor: 'rgba(0,0,0,0)',
-            plot_bgcolor: 'rgba(0,0,0,0)',
-            font: {
-                family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                size: 12
-            },
+            plot_bgcolor: 'white',
+            font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 12 },
             xaxis: {
-                gridcolor: 'rgba(0,0,0,0.1)',
-                zeroline: false,
-                title: this.getXAxisTitle(containerId)
+                title: 'Age (years)',
+                showgrid: true,
+                gridwidth: 1,
+                gridcolor: 'rgba(189, 195, 199, 0.5)',
+                zeroline: true,
+                zerolinewidth: 1,
+                zerolinecolor: 'rgba(189, 195, 199, 0.8)'
             },
             yaxis: {
-                gridcolor: 'rgba(0,0,0,0.1)',
-                zeroline: false,
-                title: this.getYAxisTitle(containerId)
+                title: 'Raw Score',
+                showgrid: true,
+                gridwidth: 1,
+                gridcolor: 'rgba(189, 195, 199, 0.5)',
+                zeroline: true,
+                zerolinewidth: 1,
+                zerolinecolor: 'rgba(189, 195, 199, 0.8)'
             }
         };
 
-        const config = {
-            responsive: true,
-            displayModeBar: false
+        Plotly.newPlot('chart1', traces, layout, { responsive: true, displayModeBar: false });
+        this.addHoverEvents('chart1');
+    }
+
+    /**
+     * Create centile chart (Chart 2: Age vs Harmonized Score with centile lines)
+     * @param {Object} chartData - Chart data
+     */
+    createCentileChart(chartData) {
+        const traces = [];
+        
+        // Add centile lines first
+        const centileStyles = {
+            c5: { dash: 'dash', width: 1.5, name: '5th %ile' },
+            c25: { dash: 'dashdot', width: 2, name: '25th %ile' },
+            c50: { dash: 'solid', width: 3, name: '50th %ile' },
+            c75: { dash: 'dashdot', width: 2, name: '75th %ile' },
+            c95: { dash: 'dash', width: 1.5, name: '95th %ile' }
+        };
+        
+        chartData.centile_columns.forEach(centile => {
+            if (chartData.centiles.length > 0) {
+                const style = centileStyles[centile];
+                traces.push({
+                    x: chartData.centiles.map(d => d.Age),
+                    y: chartData.centiles.map(d => d[centile]),
+                    mode: 'lines',
+                    name: style.name,
+                    line: { color: '#5C5C5C', dash: style.dash, width: style.width },
+                    showlegend: false,
+                    hoverinfo: 'skip'
+                });
+            }
+        });
+        
+        // Add harmonized data points
+        const sites = [...new Set(chartData.harmonized_data.map(d => d.Site))];
+        sites.forEach((site, index) => {
+            const siteData = chartData.harmonized_data.filter(d => d.Site === site);
+            const color = this.colors[index % this.colors.length];
+            
+            traces.push({
+                x: siteData.map(d => d.Age),
+                y: siteData.map(d => d.Y_harmonized),
+                mode: 'markers',
+                type: 'scatter',
+                name: site,
+                marker: { size: 8, color: color, opacity: 0.7 },
+                hovertemplate: '<b>%{text}</b><br>Age: %{x:.1f}<br>Harmonized: %{y:.1f}<br>Site: ' + site + '<extra></extra>',
+                text: siteData.map(d => d.subject_id || `S${d.Age?.toFixed(0)}_${site}`)
+            });
+        });
+
+        const layout = {
+            margin: { l: 60, r: 40, t: 20, b: 50 },
+            showlegend: true,
+            legend: { x: 1.02, y: 1, bgcolor: 'rgba(0,0,0,0)', borderwidth: 0 },
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'white',
+            font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 12 },
+            xaxis: {
+                title: 'Age (years)',
+                showgrid: true,
+                gridwidth: 1,
+                gridcolor: 'rgba(189, 195, 199, 0.5)'
+            },
+            yaxis: {
+                title: 'Harmonized Score',
+                showgrid: true,
+                gridwidth: 1,
+                gridcolor: 'rgba(189, 195, 199, 0.5)'
+            }
         };
 
-        Plotly.newPlot(containerId, [trace], layout, config);
+        Plotly.newPlot('chart2', traces, layout, { responsive: true, displayModeBar: false });
+        this.addHoverEvents('chart2');
+    }
+
+    /**
+     * Create QQ plot (Chart 3: Theoretical vs Z-Score)
+     * @param {Object} chartData - Chart data
+     */
+    createQQChart(chartData) {
+        const traces = [];
+        const sites = Object.keys(chartData.sites_data);
         
-        // Add hover events for cross-chart highlighting
-        this.addHoverEvents(containerId);
+        // Add data points
+        sites.forEach((site, index) => {
+            const siteData = chartData.sites_data[site];
+            const color = this.colors[index % this.colors.length];
+            
+            traces.push({
+                x: siteData.map(d => d.theoretical),
+                y: siteData.map(d => d.Z),
+                mode: 'markers',
+                type: 'scatter',
+                name: site,
+                marker: { size: 8, color: color, opacity: 0.7 },
+                hovertemplate: '<b>%{text}</b><br>Theoretical: %{x:.2f}<br>Z: %{y:.2f}<br>Site: ' + site + '<extra></extra>',
+                text: siteData.map(d => d.subject_id || `S${d.Age?.toFixed(0)}_${site}`)
+            });
+        });
+        
+        // Add identity lines
+        sites.forEach(site => {
+            const lineData = chartData.identity_lines[site];
+            if (lineData) {
+                traces.push({
+                    x: lineData.x,
+                    y: lineData.y,
+                    mode: 'lines',
+                    line: { color: 'black', dash: 'dash', width: 1 },
+                    showlegend: false,
+                    hoverinfo: 'skip',
+                    name: `${site} identity`
+                });
+            }
+        });
+
+        const layout = {
+            margin: { l: 60, r: 40, t: 20, b: 50 },
+            showlegend: true,
+            legend: { x: 1.02, y: 1, bgcolor: 'rgba(0,0,0,0)', borderwidth: 0 },
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'white',
+            font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 12 },
+            xaxis: {
+                title: 'Theoretical Quantiles',
+                showgrid: true,
+                gridwidth: 1,
+                gridcolor: 'rgba(189, 195, 199, 0.5)',
+                zeroline: true,
+                zerolinewidth: 1,
+                zerolinecolor: 'rgba(189, 195, 199, 0.8)'
+            },
+            yaxis: {
+                title: 'Z-Score',
+                showgrid: true,
+                gridwidth: 1,
+                gridcolor: 'rgba(189, 195, 199, 0.5)',
+                zeroline: true,
+                zerolinewidth: 1,
+                zerolinecolor: 'rgba(189, 195, 199, 0.8)'
+            }
+        };
+
+        Plotly.newPlot('chart3', traces, layout, { responsive: true, displayModeBar: false });
+        this.addHoverEvents('chart3');
+    }
+
+    /**
+     * Create histogram chart (Chart 4: Z-Score Distribution with KDE)
+     * @param {Object} chartData - Chart data
+     */
+    createHistogramChart(chartData) {
+        const traces = [];
+        const sites = Object.keys(chartData.sites_data);
+        
+        sites.forEach((site, index) => {
+            const siteData = chartData.sites_data[site];
+            const zScores = siteData.map(d => d.Z).filter(z => z !== null && z !== undefined);
+            const color = this.colors[index % this.colors.length];
+            
+            if (zScores.length > 0) {
+                // Histogram
+                traces.push({
+                    x: zScores,
+                    type: 'histogram',
+                    name: `${site} hist`,
+                    marker: { color: color, opacity: 0.6 },
+                    showlegend: false,
+                    nbinsx: 20
+                });
+                
+                // KDE approximation using smooth curve
+                if (zScores.length > 1) {
+                    const kde = this.calculateKDE(zScores);
+                    const binWidth = (Math.max(...zScores) - Math.min(...zScores)) / 20;
+                    const kdeScaled = kde.y.map(y => y * zScores.length * binWidth);
+                    
+                    traces.push({
+                        x: kde.x,
+                        y: kdeScaled,
+                        mode: 'lines',
+                        type: 'scatter',
+                        line: { color: color, width: 3 },
+                        showlegend: false,
+                        hoverinfo: 'skip',
+                        name: `${site} KDE`
+                    });
+                }
+            }
+        });
+
+        const layout = {
+            margin: { l: 60, r: 40, t: 20, b: 50 },
+            showlegend: false,
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'white',
+            font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 12 },
+            xaxis: {
+                title: 'Z-Score',
+                showgrid: true,
+                gridwidth: 1,
+                gridcolor: 'rgba(189, 195, 199, 0.5)'
+            },
+            yaxis: {
+                title: 'Count',
+                showgrid: true,
+                gridwidth: 1,
+                gridcolor: 'rgba(189, 195, 199, 0.5)'
+            }
+        };
+
+        Plotly.newPlot('chart4', traces, layout, { responsive: true, displayModeBar: false });
+    }
+
+    /**
+     * Simple KDE calculation for smooth curves
+     * @param {Array} data - Array of numeric values
+     * @returns {Object} KDE x and y values
+     */
+    calculateKDE(data) {
+        const min = Math.min(...data);
+        const max = Math.max(...data);
+        const range = max - min;
+        const bandwidth = range * 0.1; // Simple bandwidth estimation
+        
+        const x = [];
+        const y = [];
+        const numPoints = 100;
+        
+        for (let i = 0; i < numPoints; i++) {
+            const xi = min - 0.3 * range + (i / (numPoints - 1)) * (range * 1.6);
+            x.push(xi);
+            
+            let yi = 0;
+            for (const dataPoint of data) {
+                const u = (xi - dataPoint) / bandwidth;
+                yi += Math.exp(-0.5 * u * u); // Gaussian kernel
+            }
+            y.push(yi / (data.length * bandwidth * Math.sqrt(2 * Math.PI)));
+        }
+        
+        return { x, y };
     }
 
     /**
@@ -138,9 +474,10 @@ class ChartManager {
         const plotElement = document.getElementById(containerId);
         
         plotElement.on('plotly_hover', (eventData) => {
-            const pointIndex = eventData.points[0].pointIndex;
-            const subject = eventData.points[0].customdata;
-            this.highlightSubjectInAllCharts(subject);
+            const point = eventData.points[0];
+            if (point.text) {
+                this.highlightSubjectInAllCharts(point.text);
+            }
         });
         
         plotElement.on('plotly_unhover', () => {
@@ -153,29 +490,33 @@ class ChartManager {
      * @param {string} subject - Subject ID to highlight
      */
     highlightSubjectInAllCharts(subject) {
-        console.log('Highlighting subject:', subject);
         this.highlightedSubject = subject;
         
         const chartIds = ['chart1', 'chart2', 'chart3', 'chart4'];
         chartIds.forEach(chartId => {
             const element = document.getElementById(chartId);
-            if (element && element.data && element.data[0]) {
-                const subjectIndex = element.data[0].subjects.indexOf(subject);
-                if (subjectIndex !== -1) {
-                    const colors = element.data[0].subjects.map(s => 
-                        s === subject ? '#ef4444' : '#4f46e5'
-                    );
-                    const sizes = element.data[0].subjects.map(s => 
-                        s === subject ? 12 : 8
-                    );
-                    
-                    const update = {
-                        'marker.color': [colors],
-                        'marker.size': [sizes]
-                    };
-                    
-                    Plotly.restyle(chartId, update, 0);
-                }
+            if (element && element.data) {
+                // Find traces with the subject
+                element.data.forEach((trace, traceIndex) => {
+                    if (trace.text && trace.text.includes(subject)) {
+                        const subjectIndex = trace.text.indexOf(subject);
+                        if (subjectIndex !== -1) {
+                            const colors = trace.text.map(text => 
+                                text === subject ? '#ef4444' : (trace.marker.color || '#4f46e5')
+                            );
+                            const sizes = trace.text.map(text => 
+                                text === subject ? 12 : 8
+                            );
+                            
+                            const update = {
+                                'marker.color': colors,
+                                'marker.size': sizes
+                            };
+                            
+                            Plotly.restyle(chartId, update, traceIndex);
+                        }
+                    }
+                });
             }
         });
     }
@@ -189,49 +530,26 @@ class ChartManager {
         const chartIds = ['chart1', 'chart2', 'chart3', 'chart4'];
         chartIds.forEach(chartId => {
             const element = document.getElementById(chartId);
-            if (element && element.data && element.data[0]) {
-                const colors = new Array(element.data[0].x.length).fill('#4f46e5');
-                const sizes = new Array(element.data[0].x.length).fill(8);
-                
-                const update = {
-                    'marker.color': [colors],
-                    'marker.size': [sizes]
-                };
-                Plotly.restyle(chartId, update, 0);
+            if (element && element.data) {
+                element.data.forEach((trace, traceIndex) => {
+                    if (trace.text && trace.marker) {
+                        // Reset to original colors/sizes
+                        const originalColor = this.colors[traceIndex % this.colors.length] || '#4f46e5';
+                        const colors = new Array(trace.text.length).fill(originalColor);
+                        const sizes = new Array(trace.text.length).fill(8);
+                        
+                        const update = {
+                            'marker.color': colors,
+                            'marker.size': sizes
+                        };
+                        
+                        Plotly.restyle(chartId, update, traceIndex);
+                    }
+                });
             }
         });
         
         this.highlightedSubject = null;
-    }
-
-    /**
-     * Get appropriate X-axis title for chart
-     * @param {string} containerId - Chart container ID
-     * @returns {string} X-axis title
-     */
-    getXAxisTitle(containerId) {
-        const titles = {
-            'chart1': 'Age (years)',
-            'chart2': 'Education (years)',
-            'chart3': 'Subject Index',
-            'chart4': 'Predicted Score'
-        };
-        return titles[containerId] || 'X Value';
-    }
-
-    /**
-     * Get appropriate Y-axis title for chart
-     * @param {string} containerId - Chart container ID
-     * @returns {string} Y-axis title
-     */
-    getYAxisTitle(containerId) {
-        const titles = {
-            'chart1': 'Performance Score',
-            'chart2': 'Performance Score',
-            'chart3': 'Residuals',
-            'chart4': 'Actual Score'
-        };
-        return titles[containerId] || 'Y Value';
     }
 
     /**
@@ -244,7 +562,10 @@ class ChartManager {
             return;
         }
         
+        const filters = dataManager.getFilters();
         const chartIds = ['chart1', 'chart2', 'chart3', 'chart4'];
+        const chartNames = ['raw_scatter', 'centile_plot', 'qq_plot', 'histogram_kde'];
+        
         chartIds.forEach((chartId, index) => {
             const element = document.getElementById(chartId);
             if (element && element.data) {
@@ -253,7 +574,7 @@ class ChartManager {
                         format: 'png',
                         width: 800,
                         height: 600,
-                        filename: `${currentMeasure}_${chartId}`
+                        filename: `${currentMeasure}_${chartNames[index]}_${filters.sex}_${filters.site}`
                     });
                 }, index * 500); // Stagger downloads
             }
@@ -267,19 +588,31 @@ class ChartManager {
         const currentMeasure = dataManager.getCurrentMeasure();
         if (currentMeasure) {
             chartManager.clearHighlights();
-            chartManager.loadCharts(currentMeasure);
+            
+            // Reset zoom on all charts
+            const chartIds = ['chart1', 'chart2', 'chart3', 'chart4'];
+            chartIds.forEach(chartId => {
+                const element = document.getElementById(chartId);
+                if (element) {
+                    Plotly.relayout(chartId, {
+                        'xaxis.autorange': true,
+                        'yaxis.autorange': true
+                    });
+                }
+            });
         }
     }
 
     /**
      * Show error message
-     * @param {string} message - Error message to display
      */
     showError(message) {
         const contentArea = document.getElementById('content-area');
         contentArea.innerHTML = `
             <div class="error-message">
                 <strong>Error:</strong> ${message}
+                <br><br>
+                <small>Make sure your data files are properly converted and available in the /data directory.</small>
             </div>
         `;
     }
@@ -292,7 +625,7 @@ class ChartManager {
         contentArea.innerHTML = `
             <div class="loading">
                 <div class="loading-spinner"></div>
-                <span style="margin-left: 10px;">Loading charts...</span>
+                <span style="margin-left: 10px;">Loading normative model data...</span>
             </div>
         `;
     }
@@ -302,54 +635,19 @@ class ChartManager {
      * @param {string} measureName - Name of the measure
      */
     updateChartTitles(measureName) {
-        const measureTitles = {
-            working_memory: {
-                chart1: 'Age vs Working Memory',
-                chart2: 'Education vs Working Memory',
-                chart3: 'Working Memory Residuals',
-                chart4: 'Predicted vs Actual WM'
-            },
-            attention: {
-                chart1: 'Age vs Attention Score',
-                chart2: 'Education vs Attention',
-                chart3: 'Attention Residuals',
-                chart4: 'Predicted vs Actual Attention'
-            },
-            executive_function: {
-                chart1: 'Age vs Executive Function',
-                chart2: 'Education vs Executive Function',
-                chart3: 'Executive Function Residuals',
-                chart4: 'Predicted vs Actual EF'
-            },
-            processing_speed: {
-                chart1: 'Age vs Processing Speed',
-                chart2: 'Education vs Processing Speed',
-                chart3: 'Processing Speed Residuals',
-                chart4: 'Predicted vs Actual PS'
-            },
-            verbal_fluency: {
-                chart1: 'Age vs Verbal Fluency',
-                chart2: 'Education vs Verbal Fluency',
-                chart3: 'Verbal Fluency Residuals',
-                chart4: 'Predicted vs Actual VF'
-            },
-            memory_recall: {
-                chart1: 'Age vs Memory Recall',
-                chart2: 'Education vs Memory Recall',
-                chart3: 'Memory Recall Residuals',
-                chart4: 'Predicted vs Actual Memory'
-            }
+        const titles = {
+            chart1: 'Raw Score vs Age',
+            chart2: 'Harmonized Score vs Age with Centiles', 
+            chart3: 'Q-Q Plot',
+            chart4: 'Z-Score Distribution'
         };
 
-        const titles = measureTitles[measureName];
-        if (titles) {
-            Object.keys(titles).forEach(chartKey => {
-                const titleElement = document.querySelector(`#${chartKey}`).parentNode.querySelector('.chart-title');
-                if (titleElement) {
-                    titleElement.textContent = titles[chartKey];
-                }
-            });
-        }
+        Object.keys(titles).forEach(chartKey => {
+            const titleElement = document.querySelector(`#${chartKey}`).parentNode.querySelector('.chart-title');
+            if (titleElement) {
+                titleElement.textContent = titles[chartKey];
+            }
+        });
     }
 
     /**
