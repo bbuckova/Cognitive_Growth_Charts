@@ -1,56 +1,102 @@
 [
-    {
-      "id": "working_memory",
-      "name": "Working Memory",
-      "description": "Digit span and spatial working memory tasks",
-      "sample_size": 1250,
-      "age_range": "18-85",
-      "measures": ["Digit Span Forward", "Digit Span Backward", "Spatial Span"],
-      "publication": "Smith et al. (2024)"
-    },
-    {
-      "id": "attention",
-      "name": "Sustained Attention",
-      "description": "Continuous performance and vigilance tasks",
-      "sample_size": 980,
-      "age_range": "20-80",
-      "measures": ["CPT-3", "SART", "Attention Network Test"],
-      "publication": "Jones et al. (2023)"
-    },
-    {
-      "id": "executive_function",
-      "name": "Executive Function",
-      "description": "Cognitive flexibility and inhibitory control",
-      "sample_size": 1100,
-      "age_range": "18-75",
-      "measures": ["Stroop Test", "Trail Making Test", "Wisconsin Card Sort"],
-      "publication": "Brown et al. (2024)"
-    },
-    {
-      "id": "processing_speed",
-      "name": "Processing Speed",
-      "description": "Speed of cognitive processing tasks",
-      "sample_size": 1350,
-      "age_range": "16-90",
-      "measures": ["Symbol Search", "Coding", "Simple Reaction Time"],
-      "publication": "Davis et al. (2023)"
-    },
-    {
-      "id": "verbal_fluency",
-      "name": "Verbal Fluency",
-      "description": "Phonemic and semantic fluency tasks",
-      "sample_size": 890,
-      "age_range": "18-85",
-      "measures": ["FAS Test", "Category Fluency", "Action Fluency"],
-      "publication": "Wilson et al. (2024)"
-    },
-    {
-      "id": "memory_recall",
-      "name": "Memory Recall",
-      "description": "Episodic and semantic memory assessment",
-      "sample_size": 1150,
-      "age_range": "20-80",
-      "measures": ["Word List Learning", "Story Recall", "Figure Recall"],
-      "publication": "Taylor et al. (2023)"
-    }
-  ]
+  {
+    "id": "NIH_Flanker_RawScore",
+    "name": "NIH Flanker Raw Score",
+    "description": "Normative model for NIH Flanker Raw Score"
+  },
+  {
+    "id": "NIH_CogCrystalComp_RawScore",
+    "name": "NIH Cogcrystalcomp Raw Score",
+    "description": "Normative model for NIH Cogcrystalcomp Raw Score"
+  },
+  {
+    "id": "RAVLT_ShortDelay_III_TotalCorrect",
+    "name": "Ravlt Shortdelay Iii Totalcorrect",
+    "description": "Normative model for Ravlt Shortdelay Iii Totalcorrect"
+  },
+  {
+    "id": "NIH_CogTotalComp_RawScore",
+    "name": "NIH Cogtotalcomp Raw Score",
+    "description": "Normative model for NIH Cogtotalcomp Raw Score"
+  },
+  {
+    "id": "RAVLT_ShortDelay_B_TotalCorrect",
+    "name": "Ravlt Shortdelay B Totalcorrect",
+    "description": "Normative model for Ravlt Shortdelay B Totalcorrect"
+  },
+  {
+    "id": "NIH_CogEarlyComp_RawScore",
+    "name": "NIH Cogearlycomp Raw Score",
+    "description": "Normative model for NIH Cogearlycomp Raw Score"
+  },
+  {
+    "id": "NIH_CogFluidComp_RawScore",
+    "name": "NIH Cogfluidcomp Raw Score",
+    "description": "Normative model for NIH Cogfluidcomp Raw Score"
+  },
+  {
+    "id": "RAVLT_ShortDelay_I_TotalCorrect",
+    "name": "Ravlt Shortdelay I Totalcorrect",
+    "description": "Normative model for Ravlt Shortdelay I Totalcorrect"
+  },
+  {
+    "id": "NIH_PictureVocabulary_RawScore",
+    "name": "NIH Picturevocabulary Raw Score",
+    "description": "Normative model for NIH Picturevocabulary Raw Score"
+  },
+  {
+    "id": "RAVLT_ShortDelay_V_TotalCorrect",
+    "name": "Ravlt Shortdelay V Totalcorrect",
+    "description": "Normative model for Ravlt Shortdelay V Totalcorrect"
+  },
+  {
+    "id": "NIH_ListSorting_RawScore",
+    "name": "NIH Listsorting Raw Score",
+    "description": "Normative model for NIH Listsorting Raw Score"
+  },
+  {
+    "id": "RAVLT_ShortDelay_IV_TotalCorrect",
+    "name": "Ravlt Shortdelay Iv Totalcorrect",
+    "description": "Normative model for Ravlt Shortdelay Iv Totalcorrect"
+  },
+  {
+    "id": "RAVLT_ShortDelay_II_TotalCorrect",
+    "name": "Ravlt Shortdelay Ii Totalcorrect",
+    "description": "Normative model for Ravlt Shortdelay Ii Totalcorrect"
+  },
+  {
+    "id": "NIH_ProcSpeed_RawScore",
+    "name": "NIH Procspeed Raw Score",
+    "description": "Normative model for NIH Procspeed Raw Score"
+  },
+  {
+    "id": "RAVLT_ShortDelay_VII_TotalCorrect",
+    "name": "Ravlt Shortdelay Vii Totalcorrect",
+    "description": "Normative model for Ravlt Shortdelay Vii Totalcorrect"
+  },
+  {
+    "id": "NIH_OralReadingRecog_RawScore",
+    "name": "NIH Oralreadingrecog Raw Score",
+    "description": "Normative model for NIH Oralreadingrecog Raw Score"
+  },
+  {
+    "id": "NIH_PicSeq_RawScore",
+    "name": "NIH Picseq Raw Score",
+    "description": "Normative model for NIH Picseq Raw Score"
+  },
+  {
+    "id": "RAVLT_ShortDelay_VI_TotalCorrect",
+    "name": "Ravlt Shortdelay Vi Totalcorrect",
+    "description": "Normative model for Ravlt Shortdelay Vi Totalcorrect"
+  },
+  {
+    "id": "NIH_CardSort_RawScore",
+    "name": "NIH Card Sort Raw Score",
+    "description": "Normative model for NIH Card Sort Raw Score"
+  },
+  {
+    "id": "RAVLT_ShortDelay_TotalCorrect",
+    "name": "Ravlt Shortdelay Totalcorrect",
+    "description": "Normative model for Ravlt Shortdelay Totalcorrect"
+  }
+]
