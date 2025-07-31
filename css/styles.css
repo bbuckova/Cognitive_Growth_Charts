@@ -147,7 +147,9 @@ body {
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
     gap: 20px;
-    height: 600px;
+    height: 70vh;  /* ← 70% of viewport height */
+    min-height: 700px;
+    max-height: 1000px;
 }
 
 .chart-container {
