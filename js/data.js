@@ -244,8 +244,15 @@ class DataManager {
             const response = await fetch(`data/${measureName}.json`);
             if (response.ok) {
                 const data = await response.json();
+                
+                // Map sex codes to readable labels
+                const sexOptions = data.available_sexes.map(sex => ({
+                    value: sex,
+                    label: sex === 0 ? 'Female' : sex === 1 ? 'Male' : sex
+                }));
+                
                 return {
-                    sexes: data.available_sexes,
+                    sexes: sexOptions,  // ← Now returns [{value: 0, label: 'Female'}, {value: 1, label: 'Male'}]
                     sites: data.available_sites
                 };
             }

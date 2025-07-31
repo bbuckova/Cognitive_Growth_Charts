@@ -152,8 +152,8 @@ class ChartManager {
                 return;
             }
             
-            sexFilter.innerHTML = filterOptions.sexes.map(sex => 
-                `<option value="${sex}" ${sex === currentFilters.sex ? 'selected' : ''}>${sex}</option>`
+            sexFilter.innerHTML = filterOptions.sexes.map(sexOption => 
+                `<option value="${sexOption.value}" ${sexOption.value === currentFilters.sex ? 'selected' : ''}>${sexOption.label}</option>`
             ).join('');
             
             // Populate site filter  
@@ -212,7 +212,7 @@ class ChartManager {
             // Set default filters if not set
             if (!currentFilters.sex && filterOptions.sexes.length > 0) {
                 console.log('🎯 Setting default filters');
-                const defaultSex = isNaN(filterOptions.sexes[0]) ? filterOptions.sexes[0] : Number(filterOptions.sexes[0]);
+                const defaultSex = filterOptions.sexes[0].value;  // ← Just get the value directly
                 dataManager.setFilters(defaultSex, filterOptions.sites[0]);
                 console.log('🎯 Default filters set:', dataManager.getFilters());
             }
