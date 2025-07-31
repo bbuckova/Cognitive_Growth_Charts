@@ -37,6 +37,20 @@ class App {
      */
     renderNavigation(measures) {
         const nav = document.getElementById('navigation');
+        // Update the logo section with clickable logo
+        const logoSection = document.querySelector('.logo');
+        if (logoSection) {
+            logoSection.innerHTML = `
+                <img src="assets/images/lab-logo.jpeg" 
+                    alt="Lab Logo" 
+                    class="logo-image" 
+                    onclick="window.open('https://predictiveclinicalneuroscience.com/', '_blank')">
+                <div class="logo-text">
+                    <h1>Cognitive Models</h1>
+                    <p>Normative Analysis Dashboard</p>
+                </div>
+            `;
+        }
         nav.innerHTML = `
             <div class="nav-section">
                 <h3>Navigation</h3>
