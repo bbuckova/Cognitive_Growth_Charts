@@ -95,6 +95,19 @@ class ChartManager {
      * @param {string} measureName - Name of the measure
      */
     async loadCharts(measureName) {
+        const maxWait = 50; // 5 seconds max
+        let attempts = 0;
+        
+        while (!document.getElementById('chart1') && attempts < maxWait) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+        
+        if (!document.getElementById('chart1')) {
+            throw new Error('Chart containers were not created in time');
+        }
+        
+        console.log('🚀 loadCharts called for:', measureName);
         try {
             // Setup filter controls first
             await this.setupFilterControls(measureName);
@@ -121,45 +134,91 @@ class ChartManager {
      * @param {string} measureName - Name of the measure
      */
     async setupFilterControls(measureName) {
+        console.log('🎛️ Setting up filter controls for:', measureName);
+        
         try {
             const filterOptions = await dataManager.getFilterOptions(measureName);
+            console.log('📊 Filter options loaded:', filterOptions);
+            
             const currentFilters = dataManager.getFilters();
+            console.log('🔧 Current filters:', currentFilters);
             
             // Populate sex filter
             const sexFilter = document.getElementById('sex-filter');
+            console.log('🔍 Sex filter element found:', sexFilter ? 'YES' : 'NO');
+            
+            if (!sexFilter) {
+                console.error('❌ Sex filter element not found!');
+                return;
+            }
+            
             sexFilter.innerHTML = filterOptions.sexes.map(sex => 
                 `<option value="${sex}" ${sex === currentFilters.sex ? 'selected' : ''}>${sex}</option>`
             ).join('');
             
             // Populate site filter  
             const siteFilter = document.getElementById('site-filter');
+            console.log('🔍 Site filter element found:', siteFilter ? 'YES' : 'NO');
+            
+            if (!siteFilter) {
+                console.error('❌ Site filter element not found!');
+                return;
+            }
+            
             siteFilter.innerHTML = filterOptions.sites.map(site => 
                 `<option value="${site}" ${site === currentFilters.site ? 'selected' : ''}>${site}</option>`
             ).join('');
             
             // Add update button functionality
             const updateButton = document.getElementById('update-filters');
-            updateButton.addEventListener('click', () => {
-                const newSex = sexFilter.value;
-                const newSite = siteFilter.value;
-                
-                updateButton.textContent = 'Updating...';
-                updateButton.disabled = true;
-                
-                dataManager.setFilters(newSex, newSite);
-                this.loadCharts(measureName).finally(() => {
-                    updateButton.textContent = 'Update';
-                    updateButton.disabled = false;
+            console.log('🔧 Update button found:', updateButton ? 'YES' : 'NO');
+            
+            if (!updateButton) {
+                console.error('❌ Update button not found!');
+                return;
+            }
+            
+            console.log('🔗 About to add event listener...');
+            
+            try {
+                updateButton.addEventListener('click', () => {
+                    console.log('🔘 UPDATE BUTTON CLICKED!');
+                    
+                    const newSex = isNaN(sexFilter.value) ? sexFilter.value : Number(sexFilter.value);
+                    const newSite = siteFilter.value;
+                    
+                    console.log('Selected filters:', { newSex, newSite });
+                    console.log('Current filters before update:', dataManager.getFilters());
+                    
+                    updateButton.textContent = 'Updating...';
+                    updateButton.disabled = true;
+                    
+                    dataManager.setFilters(newSex, newSite);
+                    console.log('Current filters after update:', dataManager.getFilters());
+                    
+                    this.loadCharts(measureName).finally(() => {
+                        updateButton.textContent = 'Update';
+                        updateButton.disabled = false;
+                        console.log('✅ Filter update complete');
+                    });
                 });
-            });
+                
+                console.log('✅ Event listener added successfully');
+                
+            } catch (eventError) {
+                console.error('❌ Error adding event listener:', eventError);
+            }
             
             // Set default filters if not set
             if (!currentFilters.sex && filterOptions.sexes.length > 0) {
-                dataManager.setFilters(filterOptions.sexes[0], filterOptions.sites[0]);
+                console.log('🎯 Setting default filters');
+                const defaultSex = isNaN(filterOptions.sexes[0]) ? filterOptions.sexes[0] : Number(filterOptions.sexes[0]);
+                dataManager.setFilters(defaultSex, filterOptions.sites[0]);
+                console.log('🎯 Default filters set:', dataManager.getFilters());
             }
             
         } catch (error) {
-            console.error('Error setting up filter controls:', error);
+            console.error('❌ Error setting up filter controls:', error);
         }
     }
 
