@@ -22,6 +22,9 @@ class DataManager {
     async loadMeasure(measureName) {
         const cacheKey = `${measureName}_${this.currentFilters.sex}_${this.currentFilters.site}`;
         
+        console.log('Loading measure with cache key:', cacheKey);
+        console.log('Cache has key?', this.cache.has(cacheKey));
+
         if (this.cache.has(cacheKey)) {
             return this.cache.get(cacheKey);
         }
@@ -71,6 +74,9 @@ class DataManager {
         const allSitesData = rawData.harmonized.filter(row => 
             row.Sex_harmonized === sex && row.Site_harmonized === site
         );
+
+        console.log(`Filtered data: Sex=${sex}, Site=${site}, Results=${harmonized.length} rows`);
+        console.log('Available in raw data:', rawData.available_sexes, rawData.available_sites);
         
         // Prepare data for each chart
         return {
@@ -145,23 +151,46 @@ class DataManager {
     calculateIdentityLines(data) {
         const lines = {};
         const sites = [...new Set(data.map(row => row.Site))];
+        const numSites = sites.length;
+        
+        // Calculate the overall data range for both theoretical and Z values
+        const allTheoretical = data.map(row => row.theoretical).filter(val => val !== null && val !== undefined);
+        const allZ = data.map(row => row.Z).filter(val => val !== null && val !== undefined);
+        
+        if (allTheoretical.length === 0 || allZ.length === 0) {
+            console.warn('No valid data for identity lines');
+            return lines;
+        }
+        
+        // Find the range that covers both theoretical and Z values
+        const minTheoretical = Math.min(...allTheoretical);
+        const maxTheoretical = Math.max(...allTheoretical);
+        const minZ = Math.min(...allZ);
+        const maxZ = Math.max(...allZ);
+        
+        // Use the broader range with some padding
+        const minRange = Math.min(minTheoretical, minZ) - 0.5;
+        const maxRange = Math.max(maxTheoretical, maxZ) + 0.5;
+        
+        console.log(`Q-Q Plot range: [${minRange.toFixed(2)}, ${maxRange.toFixed(2)}]`);
         
         sites.forEach(site => {
             const siteData = data.filter(row => row.Site === site);
             if (siteData.length > 0) {
-                // Shift the offset by 1 to fix the Q-Q plot lines
-                const offset = siteData[0].offset;
+                // Use the corrected offset formula: number of sites - 1
+                const originalOffset = siteData[0].offset;
+                const correctedOffset = originalOffset - (numSites - 1);
+                
                 lines[site] = {
-                    x: [-3, 3],
-                    y: [-3 + offset, 3 + offset],
-                    offset: offset
+                    x: [minRange, maxRange],  // Dynamic range instead of [-3, 3]
+                    y: [minRange + correctedOffset, maxRange + correctedOffset],
+                    offset: correctedOffset
                 };
             }
         });
         
         return lines;
     }
-
     /**
      * Set current filters
      * @param {string} sex - Selected sex
