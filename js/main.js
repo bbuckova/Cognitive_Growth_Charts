@@ -139,6 +139,8 @@ class App {
             const contentArea = document.getElementById('content-area');
             contentArea.innerHTML = '';
             contentArea.appendChild(chartManager.createChartsGrid());
+
+            await new Promise(resolve => setTimeout(resolve, 100));
             
             // Load charts with real data
             await chartManager.loadCharts(measureName);
@@ -379,6 +381,11 @@ class App {
 
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.app = new App();
-    app.handleInitialRoute();
+    // Only initialize if we're on the main dashboard page
+    if (document.getElementById('navigation') && document.getElementById('main-title')) {
+        window.app = new App();
+        app.handleInitialRoute();
+    } else {
+        console.log('Not on main dashboard page, skipping App initialization');
+    }
 });
