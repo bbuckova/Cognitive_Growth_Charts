@@ -22,16 +22,21 @@ class ChartManager {
     createChartsGrid() {
         const grid = document.createElement('div');
         grid.innerHTML = `
-            <!-- Filter Controls -->
-            <div id="filter-controls" style="
-                display: flex; 
-                gap: 15px; 
-                margin-bottom: 20px; 
-                padding: 15px; 
-                background: rgba(255, 255, 255, 0.9); 
-                border-radius: 10px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            ">
+                <!-- Filter Controls -->
+                <div id="filter-controls" style="
+                    margin-bottom: 20px; 
+                    padding: 15px; 
+                    background: rgba(255, 255, 255, 0.9); 
+                    border-radius: 10px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                ">
+                    <h4 style="
+                        margin: 0 0 12px 0; 
+                        color: #374151; 
+                        font-size: 16px; 
+                        font-weight: 600;
+                    ">Show data harmonised by:</h4>
+                    <div style="display: flex; gap: 15px; align-items: end;">
                 <div>
                     <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #374151;">Sex:</label>
                     <select id="sex-filter" style="
@@ -59,11 +64,12 @@ class ChartManager {
                     </select>
                 </div>
                 <div style="display: flex; align-items: end;">
-                    <button id="update-filters" class="control-btn" style="
-                        padding: 8px 16px;
-                        margin: 0;
-                        font-size: 14px;
-                    ">Update</button>
+                <button id="update-filters" class="control-btn" style="
+                            padding: 8px 16px;
+                            margin: 0;
+                            font-size: 14px;
+                        ">Update</button>
+                    </div>
                 </div>
             </div>
             
@@ -446,9 +452,9 @@ class ChartManager {
                 traces.push({
                     x: zScores,
                     type: 'histogram',
-                    name: `${site} hist`,
+                    name: site,  // ← Cleaner name (just the site name)
                     marker: { color: color, opacity: 0.6 },
-                    showlegend: false,
+                    showlegend: true,  // ← Show in legend
                     nbinsx: 20
                 });
                 
@@ -474,7 +480,8 @@ class ChartManager {
 
         const layout = {
             margin: { l: 60, r: 40, t: 20, b: 50 },
-            showlegend: false,
+            showlegend: true,
+            legend: { x: 1.02, y: 1, bgcolor: 'rgba(0,0,0,0)', borderwidth: 0 }, 
             paper_bgcolor: 'rgba(0,0,0,0)',
             plot_bgcolor: 'white',
             font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', size: 12 },
@@ -631,8 +638,8 @@ class ChartManager {
                 setTimeout(() => {
                     Plotly.downloadImage(chartId, {
                         format: 'png',
-                        width: 800,
-                        height: 600,
+                        width: 1200,
+                        height: 800,
                         filename: `${currentMeasure}_${chartNames[index]}_${filters.sex}_${filters.site}`
                     });
                 }, index * 500); // Stagger downloads
