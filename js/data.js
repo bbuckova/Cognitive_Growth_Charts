@@ -303,42 +303,37 @@ class DataManager {
     /**
      * Export model information
      */
-    static exportModel() {
+    static async exportModel() {
         const currentMeasure = dataManager.currentMeasure;
         if (!currentMeasure) {
             alert('Please select a measure first.');
             return;
         }
         
-        const modelInfo = {
-            measure: currentMeasure,
-            model_type: 'normative_model',
-            filters: dataManager.currentFilters,
-            methodology: {
-                centile_calculation: 'Quantile regression with demographic harmonization',
-                z_score_standardization: 'Age and demographic adjusted normalization',
-                site_harmonization: 'Multi-site batch effect correction'
-            },
-            parameters: {
-                centiles: ['5th', '25th', '50th', '75th', '95th'],
-                demographic_variables: ['Age', 'Sex', 'Site'],
-                harmonization_method: 'ComBat'
-            },
-            metadata: {
-                created: new Date().toISOString(),
-                version: '1.0.0',
-                description: 'Cognitive normative model with demographic harmonization'
+        try {
+            // Fetch the actual model JSON file
+            const response = await fetch(`data/${currentMeasure}_model.json`);
+            
+            if (!response.ok) {
+                throw new Error(`Model file not found: ${currentMeasure}_model.json`);
             }
-        };
-
-        const jsonData = JSON.stringify(modelInfo, null, 2);
-        const blob = new Blob([jsonData], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${currentMeasure}_model_info.json`;
-        a.click();
-        URL.revokeObjectURL(url);
+            
+            const modelData = await response.json();
+            
+            // Create blob and download
+            const jsonData = JSON.stringify(modelData, null, 2);
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentMeasure}_model.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+        } catch (error) {
+            console.error('Error exporting model:', error);
+            alert(`Failed to export model: ${error.message}\n\nMake sure ${currentMeasure}_model.json exists in the data folder.`);
+        }
     }
 
     /**
