@@ -707,11 +707,16 @@ class ChartManager {
             chart3: 'Q-Q Plot',
             chart4: 'Z-Score Distribution'
         };
-
+    
         Object.keys(titles).forEach(chartKey => {
-            const titleElement = document.querySelector(`#${chartKey}`).parentNode.querySelector('.chart-title');
-            if (titleElement) {
-                titleElement.textContent = titles[chartKey];
+            const chartElement = document.querySelector(`#${chartKey}`);
+            if (chartElement && chartElement.parentNode) {  // ← Add null checks
+                const titleElement = chartElement.parentNode.querySelector('.chart-title');
+                if (titleElement) {
+                    titleElement.textContent = titles[chartKey];
+                }
+            } else {
+                console.warn(`Chart element ${chartKey} not found for title update`);
             }
         });
     }

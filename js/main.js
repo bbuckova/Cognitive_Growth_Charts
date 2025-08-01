@@ -159,7 +159,13 @@ class App {
             
             // Load charts with real data
             await chartManager.loadCharts(measureName);
-            chartManager.updateChartTitles(measureName);
+
+            // Only update titles if charts were created successfully
+            try {
+                chartManager.updateChartTitles(measureName);
+            } catch (titleError) {
+                console.warn('Could not update chart titles:', titleError.message);
+            }
             
             this.updateActiveNav(displayName);
             this.updateURL('measure', measureName);
