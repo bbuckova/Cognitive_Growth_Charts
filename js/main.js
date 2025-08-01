@@ -153,8 +153,9 @@ class App {
             const contentArea = document.getElementById('content-area');
             contentArea.innerHTML = '';
             contentArea.appendChild(chartManager.createChartsGrid());
-
-            await new Promise(resolve => setTimeout(resolve, 100));
+    
+            // Wait for DOM to be fully updated with proper checking
+            await this.waitForChartContainers();
             
             // Load charts with real data
             await chartManager.loadCharts(measureName);
@@ -167,6 +168,29 @@ class App {
             console.error('Error loading measure:', error);
             chartManager.showError(`Failed to load ${displayName}: ${error.message}`);
         }
+    }
+    
+    /**
+     * Wait for chart containers to exist in DOM
+     */
+    async waitForChartContainers() {
+        const maxAttempts = 50; // 5 seconds max
+        let attempts = 0;
+        
+        while (attempts < maxAttempts) {
+            const chart1 = document.getElementById('chart1');
+            const sexFilter = document.getElementById('sex-filter');
+            
+            if (chart1 && sexFilter) {
+                console.log('✅ Chart containers ready after', attempts * 100, 'ms');
+                return; // All containers exist
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+        
+        throw new Error('Chart containers were not created in time');
     }
 
     /**
