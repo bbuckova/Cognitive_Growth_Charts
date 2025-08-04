@@ -41,7 +41,7 @@ class App {
         const logoSection = document.querySelector('.logo');
         if (logoSection) {
             logoSection.innerHTML = `
-                <img src="assets/images/lab-logo.jpeg" 
+                <img src="assets/images/lab-logo.png" 
                     alt="Lab Logo" 
                     class="logo-image" 
                     onclick="window.open('https://predictiveclinicalneuroscience.com/', '_blank')">
