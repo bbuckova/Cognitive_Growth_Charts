@@ -1,0 +1,184 @@
+{
+  "total_scenarios": 27,
+  "parameters": {
+    "site_effects": [
+      "none",
+      "mild",
+      "strong"
+    ],
+    "heteroscedasticity": [
+      "none",
+      "mild",
+      "strong"
+    ],
+    "distribution": [
+      "normal",
+      "skewed",
+      "kurtotic"
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "001",
+      "site_effects": "none",
+      "heteroscedasticity": "none",
+      "distribution": "normal"
+    },
+    {
+      "id": "002",
+      "site_effects": "none",
+      "heteroscedasticity": "none",
+      "distribution": "skewed"
+    },
+    {
+      "id": "003",
+      "site_effects": "none",
+      "heteroscedasticity": "none",
+      "distribution": "kurtotic"
+    },
+    {
+      "id": "004",
+      "site_effects": "none",
+      "heteroscedasticity": "mild",
+      "distribution": "normal"
+    },
+    {
+      "id": "005",
+      "site_effects": "none",
+      "heteroscedasticity": "mild",
+      "distribution": "skewed"
+    },
+    {
+      "id": "006",
+      "site_effects": "none",
+      "heteroscedasticity": "mild",
+      "distribution": "kurtotic"
+    },
+    {
+      "id": "007",
+      "site_effects": "none",
+      "heteroscedasticity": "strong",
+      "distribution": "normal"
+    },
+    {
+      "id": "008",
+      "site_effects": "none",
+      "heteroscedasticity": "strong",
+      "distribution": "skewed"
+    },
+    {
+      "id": "009",
+      "site_effects": "none",
+      "heteroscedasticity": "strong",
+      "distribution": "kurtotic"
+    },
+    {
+      "id": "010",
+      "site_effects": "mild",
+      "heteroscedasticity": "none",
+      "distribution": "normal"
+    },
+    {
+      "id": "011",
+      "site_effects": "mild",
+      "heteroscedasticity": "none",
+      "distribution": "skewed"
+    },
+    {
+      "id": "012",
+      "site_effects": "mild",
+      "heteroscedasticity": "none",
+      "distribution": "kurtotic"
+    },
+    {
+      "id": "013",
+      "site_effects": "mild",
+      "heteroscedasticity": "mild",
+      "distribution": "normal"
+    },
+    {
+      "id": "014",
+      "site_effects": "mild",
+      "heteroscedasticity": "mild",
+      "distribution": "skewed"
+    },
+    {
+      "id": "015",
+      "site_effects": "mild",
+      "heteroscedasticity": "mild",
+      "distribution": "kurtotic"
+    },
+    {
+      "id": "016",
+      "site_effects": "mild",
+      "heteroscedasticity": "strong",
+      "distribution": "normal"
+    },
+    {
+      "id": "017",
+      "site_effects": "mild",
+      "heteroscedasticity": "strong",
+      "distribution": "skewed"
+    },
+    {
+      "id": "018",
+      "site_effects": "mild",
+      "heteroscedasticity": "strong",
+      "distribution": "kurtotic"
+    },
+    {
+      "id": "019",
+      "site_effects": "strong",
+      "heteroscedasticity": "none",
+      "distribution": "normal"
+    },
+    {
+      "id": "020",
+      "site_effects": "strong",
+      "heteroscedasticity": "none",
+      "distribution": "skewed"
+    },
+    {
+      "id": "021",
+      "site_effects": "strong",
+      "heteroscedasticity": "none",
+      "distribution": "kurtotic"
+    },
+    {
+      "id": "022",
+      "site_effects": "strong",
+      "heteroscedasticity": "mild",
+      "distribution": "normal"
+    },
+    {
+      "id": "023",
+      "site_effects": "strong",
+      "heteroscedasticity": "mild",
+      "distribution": "skewed"
+    },
+    {
+      "id": "024",
+      "site_effects": "strong",
+      "heteroscedasticity": "mild",
+      "distribution": "kurtotic"
+    },
+    {
+      "id": "025",
+      "site_effects": "strong",
+      "heteroscedasticity": "strong",
+      "distribution": "normal"
+    },
+    {
+      "id": "026",
+      "site_effects": "strong",
+      "heteroscedasticity": "strong",
+      "distribution": "skewed"
+    },
+    {
+      "id": "027",
+      "site_effects": "strong",
+      "heteroscedasticity": "strong",
+      "distribution": "kurtotic"
+    }
+  ]
+}

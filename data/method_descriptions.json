@@ -1,0 +1,27 @@
+{
+  "bins_10yr": {
+    "name": "10-Year Age Bins",
+    "description": "Traditional norming using 10-year age groups with sex stratification",
+    "type": "traditional"
+  },
+  "bins_5yr": {
+    "name": "5-Year Age Bins",
+    "description": "Traditional norming using 5-year age groups with sex stratification",
+    "type": "traditional"
+  },
+  "regression": {
+    "name": "Regression-Based Norming",
+    "description": "Linear regression with age, age\u00b2, sex, and site effects",
+    "type": "modern"
+  },
+  "loess": {
+    "name": "LOESS Smoothing",
+    "description": "Non-parametric LOESS regression for smooth age curves",
+    "type": "modern"
+  },
+  "hbr": {
+    "name": "Hierarchical Bayesian Regression",
+    "description": "Advanced normative modeling with centile estimation",
+    "type": "advanced"
+  }
+}
