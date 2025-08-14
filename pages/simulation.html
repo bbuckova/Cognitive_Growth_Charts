@@ -215,23 +215,17 @@
         <!-- Row 2: Algorithm Results -->
         <div class="chart-container">
             <div class="chart-title">Algorithm Result 1</div>
-            <div class="chart plot-container" id="algorithm-plot-1">
-                <div class="loading">Waiting for plot specification...</div>
-            </div>
+            <div class="chart plot-container" id="algorithm-plot-1"></div>
         </div>
         
         <div class="chart-container">
             <div class="chart-title">Algorithm Result 2</div>
-            <div class="chart plot-container" id="algorithm-plot-2">
-                <div class="loading">Waiting for plot specification...</div>
-            </div>
+            <div class="chart plot-container" id="algorithm-plot-2"></div>
         </div>
         
         <div class="chart-container">
             <div class="chart-title">Algorithm Result 3</div>
-            <div class="chart plot-container" id="algorithm-plot-3">
-                <div class="loading">Waiting for plot specification...</div>
-            </div>
+            <div class="chart plot-container" id="algorithm-plot-3"></div>
         </div>
     </div>
     
@@ -281,8 +275,16 @@
                     document.querySelectorAll('.algorithm-btn').forEach(btn => btn.classList.remove('active'));
                     e.target.classList.add('active');
                     this.currentAlgorithm = e.target.dataset.algorithm;
-                    document.getElementById('algorithm-row-title').textContent = 
-                        `Algorithm Results: ${e.target.textContent}`;
+                    
+                    console.log('Algorithm changed to:', this.currentAlgorithm);
+                    
+                    // Update row title if it exists
+                    const rowTitle = document.getElementById('algorithm-row-title');
+                    if (rowTitle) {
+                        rowTitle.textContent = `Algorithm Results: ${e.target.textContent}`;
+                    }
+                    
+                    // Re-render algorithm plots
                     this.renderAlgorithmPlots();
                 }
             });
