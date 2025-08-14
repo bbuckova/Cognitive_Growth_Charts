@@ -56,6 +56,7 @@ class App {
                 <h3>Navigation</h3>
                 <a href="#" class="nav-item active" onclick="app.showIntroduction()">Introduction</a>
                 <a href="#" class="nav-item" onclick="app.showDocumentation()">Documentation</a>
+                <a href="#" class="nav-item" onclick="app.showSimulation()">Simulation</a>
             </div>
             
             <div class="nav-section">
@@ -127,6 +128,54 @@ class App {
         
         this.updateActiveNav('Documentation');
         this.updateURL('documentation');
+    }
+
+    /**
+     * Show simulation page
+     */
+    async showSimulation() {
+        console.log('TEST: showSimulation() called');
+        this.currentPage = 'simulation';
+        this.updateHeader('Simulation Dashboard', 
+                        'Interactive visualization of cognitive normative models under different scenarios');
+        this.hideControls();
+        
+        try {
+            const content = await this.loadPageContent('simulation.html');
+            console.log('TEST: simulation.html content loaded, length:', content.length);
+            this.setContent(content);
+            
+            // Initialize simulation page after content is loaded
+            setTimeout(() => {
+                console.log('TEST: setTimeout callback executing');
+                
+                // Find and execute the script tag manually
+                const contentArea = document.getElementById('content-area');
+                const scripts = contentArea.querySelectorAll('script');
+                
+                scripts.forEach(script => {
+                    console.log('TEST: Executing script tag');
+                    const newScript = document.createElement('script');
+                    newScript.textContent = script.textContent;
+                    document.head.appendChild(newScript);
+                    document.head.removeChild(newScript);
+                });
+                
+                // Now try to create the SimulationPage
+                console.log('TEST: window.SimulationPage exists?', typeof window.SimulationPage);
+                if (window.SimulationPage) {
+                    console.log('TEST: About to create new SimulationPage()');
+                    new SimulationPage();
+                    console.log('TEST: SimulationPage() created');
+                }
+            }, 100);
+        } catch (error) {
+            console.error('Error loading simulation page:', error);
+            this.setContent('<div class="intro-content"><h3>Error</h3><p>Could not load simulation page. Please check that simulation.html exists in the pages folder.</p></div>');
+        }
+        
+        this.updateActiveNav('Simulation');
+        this.updateURL('simulation');
     }
 
     /**
@@ -302,6 +351,17 @@ class App {
     }
 
     /**
+     * Get simulation page content
+     * @returns {string} HTML content
+     */
+    getSimulationContent() {
+        return `
+            <!-- Insert the entire simulation HTML content here -->
+            <!-- Copy everything from the artifact starting with the CSS styles and ending with the JavaScript -->
+        `;
+    }
+
+    /**
      * Update page header
      * @param {string} title - Main title
      * @param {string} subtitle - Subtitle
@@ -366,6 +426,9 @@ class App {
                 break;
             case 'documentation':
                 this.showDocumentation();
+                break;
+            case 'simulation':
+                this.showSimulation();
                 break;
             case 'measure':
                 if (measure) {
