@@ -1,0 +1,895 @@
+<!-- Minimal additional styles for simulation-specific elements -->
+<style>
+    .simulation-controls {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 15px;
+        padding: 20px;
+        margin-top: 40px;
+        margin-bottom: 40px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+}
+    
+    .controls-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+    }
+    
+    .control-group {
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid rgba(57, 192, 186, 0.2);
+    }
+    
+    .control-group label {
+        display: block;
+        margin-bottom: 10px;
+        color: #1f2937;
+        font-weight: 600;
+    }
+    
+    .toggle-buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    
+    .toggle-btn {
+        padding: 8px 16px;
+        border: 1px solid rgba(57, 192, 186, 0.2);
+        background: rgba(255, 255, 255, 0.9);
+        color: #39c0ba;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9em;
+        font-weight: 500;
+    }
+    
+    .toggle-btn:hover {
+        background: #39c0ba;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(57, 192, 186, 0.3);
+    }
+    
+    .toggle-btn.active {
+        background: linear-gradient(135deg, #39c0ba, #5dd3cd);
+        color: white;
+        box-shadow: 0 4px 15px rgba(57, 192, 186, 0.3);
+    }
+    
+    .algorithm-buttons {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .algorithm-btn {
+        padding: 12px 24px;
+        border: 1px solid rgba(57, 192, 186, 0.2);
+        background: rgba(255, 255, 255, 0.9);
+        color: #39c0ba;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .algorithm-btn:hover {
+        background: #39c0ba;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(57, 192, 186, 0.3);
+    }
+    
+    .algorithm-btn.active {
+        background: linear-gradient(135deg, #39c0ba, #5dd3cd);
+        color: white;
+        box-shadow: 0 4px 15px rgba(57, 192, 186, 0.3);
+    }
+    
+    .plots-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+    
+    .plot-container {
+        height: 350px;
+    }
+    
+    .row-label {
+        grid-column: 1 / -1;
+        text-align: center;
+        margin: 20px 0 15px 0;
+    }
+    
+    .row-label h3 {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 10px 20px;
+        margin: 0;
+        color: #1f2937;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(57, 192, 186, 0.2);
+        border: 1px solid rgba(57, 192, 186, 0.3);
+    }
+    
+    @media (max-width: 1200px) {
+        .plots-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    
+    @media (max-width: 768px) {
+        .plots-grid { grid-template-columns: 1fr; }
+        .algorithm-buttons { flex-direction: column; align-items: center; }
+    }
+    </style>
+    
+    <!-- Simulation Controls -->
+    <div class="simulation-controls">
+        <h3 style="text-align: center; margin-bottom: 20px; color: #1f2937;">Simulation Parameters</h3>
+        <div class="controls-grid">
+            <div class="control-group">
+                <label>Site Effects</label>
+                <div class="toggle-buttons" id="site-effects-controls">
+                    <button class="toggle-btn active" data-value="none">None</button>
+                    <button class="toggle-btn" data-value="mild">Mild</button>
+                    <button class="toggle-btn" data-value="strong">Strong</button>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Heteroscedasticity</label>
+                <div class="toggle-buttons" id="heteroscedasticity-controls">
+                    <button class="toggle-btn active" data-value="none">None</button>
+                    <button class="toggle-btn" data-value="mild">Mild</button>
+                    <button class="toggle-btn" data-value="strong">Strong</button>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Distribution</label>
+                <div class="toggle-buttons" id="distribution-controls">
+                    <button class="toggle-btn active" data-value="normal">Normal</button>
+                    <button class="toggle-btn" data-value="skewed">Skewed</button>
+                    <button class="toggle-btn" data-value="kurtotic">Kurtotic</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Data Status (reusing your existing message styles) -->
+    <div class="success-message" id="data-status" style="display: none !important;">
+        Loading scenario data...
+    </div>
+    
+    <!-- Plots Grid -->
+    <div class="plots-grid">
+        <!-- Row 1: Raw Data Plots -->
+        <div class="chart-container">
+            <div class="chart-title">Age vs Cognitive Score by Site</div>
+            <div class="chart plot-container" id="raw-scatter-plot">
+                <div class="loading">Loading scatter plot...</div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-title">Cognitive Score Distribution by Site</div>
+            <div class="chart plot-container" id="raw-plot-2">
+                <div class="loading">Loading distribution plot...</div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-title">Q-Q Plot by Site</div>
+            <div class="chart plot-container" id="raw-plot-3">
+                <div class="loading">Loading Q-Q plot...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Algorithm Selector (moved here) -->
+    <div class="simulation-controls">
+        <h3 style="text-align: center; margin-bottom: 20px; color: #1f2937;">Algorithm Selection</h3>
+        <div class="algorithm-buttons">
+            <button class="algorithm-btn active" data-algorithm="bins_10yr">10-Year Bins</button>
+            <button class="algorithm-btn" data-algorithm="bins_5yr">5-Year Bins</button>
+            <button class="algorithm-btn" data-algorithm="loess">LOESS</button>
+            <button class="algorithm-btn" data-algorithm="hbr">HBR</button>
+        </div>
+    </div>
+
+    <!-- Second Row of Plots -->
+    <div class="plots-grid">
+        <!-- Row 2 Label
+        <div class="row-label">
+            <h3 id="algorithm-row-title">Algorithm Results: 10-Year Bins</h3>
+        </div>
+         -->
+        <!-- Row 2: Algorithm Results -->
+        <div class="chart-container">
+            <div class="chart-title">Algorithm Result 1</div>
+            <div class="chart plot-container" id="algorithm-plot-1">
+                <div class="loading">Waiting for plot specification...</div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-title">Algorithm Result 2</div>
+            <div class="chart plot-container" id="algorithm-plot-2">
+                <div class="loading">Waiting for plot specification...</div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-title">Algorithm Result 3</div>
+            <div class="chart plot-container" id="algorithm-plot-3">
+                <div class="loading">Waiting for plot specification...</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript -->
+    <script>
+    class SimulationPage {
+        constructor() {
+            this.currentSettings = {
+                site_effects: 'none',
+                heteroscedasticity: 'none',
+                distribution: 'normal'
+            };
+            this.currentAlgorithm = 'bins_10yr';
+            this.scenarioData = null;
+            this.scenarioMapping = {};
+            this.colors = ['#39c0ba', '#f35b6a', '#fbb2b9'];
+            
+            this.init();
+        }
+        
+        async init() {
+            console.log('SimulationPage: Starting initialization...');
+            this.setupEventListeners();
+            console.log('SimulationPage: Event listeners set up');
+            await this.buildScenarioMapping();
+            console.log('SimulationPage: Scenario mapping built');
+            await this.loadCurrentScenario();
+            console.log('SimulationPage: Initial scenario loaded');
+        }
+        
+        setupEventListeners() {
+            // Simulation Parameters
+            ['site-effects', 'heteroscedasticity', 'distribution'].forEach(controlId => {
+                document.getElementById(`${controlId}-controls`).addEventListener('click', (e) => {
+                    if (e.target.classList.contains('toggle-btn')) {
+                        this.updateToggle(`${controlId}-controls`, e.target);
+                        const settingKey = controlId.replace('-', '_');
+                        this.currentSettings[settingKey] = e.target.dataset.value;
+                        this.loadCurrentScenario();
+                    }
+                });
+            });
+            
+            // Algorithm Selector
+            document.querySelector('.algorithm-buttons').addEventListener('click', (e) => {
+                if (e.target.classList.contains('algorithm-btn')) {
+                    document.querySelectorAll('.algorithm-btn').forEach(btn => btn.classList.remove('active'));
+                    e.target.classList.add('active');
+                    this.currentAlgorithm = e.target.dataset.algorithm;
+                    document.getElementById('algorithm-row-title').textContent = 
+                        `Algorithm Results: ${e.target.textContent}`;
+                    this.renderAlgorithmPlots();
+                }
+            });
+        }
+        
+        updateToggle(containerId, activeBtn) {
+            const container = document.getElementById(containerId);
+            container.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+            activeBtn.classList.add('active');
+        }
+        
+        async buildScenarioMapping() {
+            let scenarioIndex = 1;
+            const siteEffects = ['none', 'mild', 'strong'];
+            const heteroscedasticity = ['none', 'mild', 'strong'];
+            const distributions = ['normal', 'skewed', 'kurtotic'];
+            
+            siteEffects.forEach(se => {
+                heteroscedasticity.forEach(h => {
+                    distributions.forEach(d => {
+                        const key = `${se}_${h}_${d}`;
+                        // Format with leading zeros and _complete suffix
+                        const scenarioNum = scenarioIndex.toString().padStart(3, '0');
+                        this.scenarioMapping[key] = `scenario_${scenarioNum}_complete`;
+                        scenarioIndex++;
+                    });
+                });
+            });
+            
+            console.log('Scenario mapping built:', this.scenarioMapping);
+        }
+        
+        async loadCurrentScenario() {
+            console.log('SimulationPage: Loading scenario with settings:', this.currentSettings);
+            
+            const statusEl = document.getElementById('data-status');
+            // statusEl.style.display = 'block';
+            statusEl.className = 'success-message';
+            statusEl.textContent = 'Loading scenario data...';
+            
+            try {
+                const settingsKey = `${this.currentSettings.site_effects}_${this.currentSettings.heteroscedasticity}_${this.currentSettings.distribution}`;
+                const scenarioFile = this.scenarioMapping[settingsKey];
+                
+                console.log(`SimulationPage: Settings key: ${settingsKey}`);
+                console.log(`SimulationPage: Mapped to file: ${scenarioFile}`);
+                console.log(`SimulationPage: Full path: data/${scenarioFile}.json`);
+                
+                const response = await fetch(`data/${scenarioFile}.json`);
+                console.log('SimulationPage: Fetch response:', response);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: Failed to load ${scenarioFile}.json`);
+                }
+                
+                this.scenarioData = await response.json();
+                console.log('SimulationPage: Loaded scenario data:', this.scenarioData);
+                
+                // statusEl.textContent = `Loaded: ${scenarioFile} (${this.scenarioData.parameters.site_effects}/${this.scenarioData.parameters.heteroscedasticity}/${this.scenarioData.parameters.distribution})`;
+                
+                console.log('SimulationPage: About to render plots...');
+                this.renderRawDataPlots();
+                this.renderAlgorithmPlots();
+                console.log('SimulationPage: Plots rendered');
+                
+            } catch (error) {
+                console.error('SimulationPage: Error loading scenario:', error);
+                statusEl.className = 'error-message';
+                statusEl.textContent = `Error: Could not load scenario data (${error.message})`;
+            }
+        }
+        
+        renderRawDataPlots() {
+            console.log('SimulationPage: Starting to render raw data plots');
+            if (!this.scenarioData) {
+                console.error('SimulationPage: No scenario data available for rendering');
+                return;
+            }
+            
+            console.log('SimulationPage: Scenario data available, rendering plots...');
+            this.renderScatterPlot();
+            this.renderDistributionPlot();
+            this.renderQQPlot();
+            console.log('SimulationPage: Raw data plots rendering complete');
+        }
+        
+        renderAlgorithmPlots() {
+            if (!this.scenarioData) return;
+            console.log(`Rendering algorithm plots for: ${this.currentAlgorithm}`);
+            // Plot 1: Scatter + Regression/Centile curves
+            this.renderAlgorithmPlot1();
+            // Plot 2: Z-scores histogram + KDE by site
+            this.renderAlgorithmPlot2();
+            // Plot 3: Q-Q plot of residuals by site
+            this.renderAlgorithmPlot3();
+        }
+        
+        renderScatterPlot() {
+            console.log('SimulationPage: Starting scatter plot render');
+            
+            try {
+                const data = this.scenarioData.raw_data;
+                console.log('SimulationPage: Raw data structure:', Object.keys(data));
+                
+                const sites = data.site_names;
+                const ages = data.age;
+                const scores = data.cognitive_score;
+                const siteArray = data.site;
+                
+                console.log('SimulationPage: Data arrays lengths - ages:', ages?.length, 'scores:', scores?.length, 'sites:', sites?.length);
+                
+                const traces = sites.map((site, i) => {
+                    const mask = siteArray.map(s => s === i);
+                    const siteAges = ages.filter((age, idx) => mask[idx]);
+                    const siteScores = scores.filter((score, idx) => mask[idx]);
+                    
+                    console.log(`SimulationPage: Site ${site} has ${siteAges.length} data points`);
+                    
+                    return {
+                        x: siteAges,
+                        y: siteScores,
+                        mode: 'markers',
+                        name: site,
+                        type: 'scatter',
+                        marker: {
+                            size: 12,
+                            color: this.colors[i % this.colors.length],
+                            opacity: 1,
+                            line: { width: 0.5, color: 'white' }
+                        },
+                        hovertemplate: `<b>${site}</b><br>Age: %{x}<br>Cognitive Score: %{y}<extra></extra>`
+                    };
+                });
+                
+                const layout = {
+                    xaxis: { title: 'Age', showgrid: true, gridcolor: 'lightgrey' },
+                    yaxis: { title: 'Cognitive Score', showgrid: true, gridcolor: 'lightgrey' },
+                    hovermode: 'closest',
+                    showlegend: false,
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    margin: { l: 60, r: 20, t: 20, b: 60 },
+                    font: { size: 14 }
+                };
+                
+                console.log('SimulationPage: About to create Plotly scatter plot');
+                Plotly.newPlot('raw-scatter-plot', traces, layout, { responsive: true });
+                console.log('SimulationPage: Scatter plot created successfully');
+                
+            } catch (error) {
+                console.error('SimulationPage: Error rendering scatter plot:', error);
+            }
+        }
+        
+        renderDistributionPlot() {
+            const data = this.scenarioData.raw_data;
+            const sites = [...new Set(data.site)];
+            const scores = data.cognitive_score;
+            const siteArray = data.site;
+            
+            const traces = [];
+            
+            sites.forEach((site, i) => {
+                const mask = siteArray.map(s => s === site);
+                const siteScores = scores.filter((score, idx) => mask[idx]);
+                const color = this.colors[i % this.colors.length];
+                
+                if (siteScores.length === 0) return;
+                
+                // Histogram
+                traces.push({
+                    x: siteScores,
+                    name: String(site),
+                    type: 'histogram',
+                    nbinsx: 20,
+                    opacity: 0.6,
+                    marker: { color: color },
+                    histnorm: 'probability density',
+                    showlegend: false
+                });
+                
+                // Simple KDE approximation
+                if (siteScores.length > 1) {
+                    const sortedScores = [...siteScores].sort((a, b) => a - b);
+                    const min = sortedScores[0];
+                    const max = sortedScores[sortedScores.length - 1];
+                    const range = max - min;
+                    const bandwidth = range / 10;
+                    
+                    const xRange = [];
+                    const kdeValues = [];
+                    
+                    for (let x = min - range * 0.2; x <= max + range * 0.2; x += range / 100) {
+                        xRange.push(x);
+                        let density = 0;
+                        
+                        siteScores.forEach(score => {
+                            const gaussian = Math.exp(-0.5 * Math.pow((x - score) / bandwidth, 2)) / 
+                                           (bandwidth * Math.sqrt(2 * Math.PI));
+                            density += gaussian;
+                        });
+                        
+                        kdeValues.push(density / siteScores.length);
+                    }
+                    
+                    traces.push({
+                        x: xRange,
+                        y: kdeValues,
+                        mode: 'lines',
+                        name: `${site}_kde`,
+                        line: { color: color, width: 4 },
+                        showlegend: false,
+                        type: 'scatter'
+                    });
+                }
+            });
+            
+            const layout = {
+                xaxis: { title: 'Cognitive Score', showgrid: true, gridcolor: 'lightgrey' },
+                yaxis: { title: 'Density', showgrid: true, gridcolor: 'lightgrey' },
+                hovermode: 'closest',
+                showlegend: false,
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                margin: { l: 60, r: 20, t: 20, b: 60 },
+                font: { size: 14 },
+                barmode: 'overlay'
+            };
+            
+            Plotly.newPlot('raw-plot-2', traces, layout, { responsive: true });
+        }
+        
+        renderQQPlot() {
+            const qqData = this.scenarioData.raw_data.qq_data;
+            const sitesData = qqData.sites.filter(x => x !== null && x !== 'nan' && x !== undefined);
+            const uniqueSites = [...new Set(sitesData)];
+            const theoretical = qqData.theoretical;
+            const sample = qqData.sample;
+            const sitesArray = qqData.sites;
+            const lineX = qqData.identity_line.x.slice(0, 2);
+            const lineY = qqData.identity_line.y.slice(0, 2);
+            
+            const traces = [];
+            
+            // Scatter points for each site
+            uniqueSites.forEach((site, i) => {
+                const mask = sitesArray.map(s => s === site);
+                const siteTheoretical = theoretical.filter((val, idx) => mask[idx]);
+                const siteSample = sample.filter((val, idx) => mask[idx]);
+                const color = this.colors[i % this.colors.length];
+                
+                traces.push({
+                    x: siteTheoretical,
+                    y: siteSample,
+                    mode: 'markers',
+                    name: String(site),
+                    type: 'scatter',
+                    marker: {
+                        size: 12,
+                        color: color,
+                        opacity: 1,
+                        line: { width: 0.5, color: 'white' }
+                    },
+                    hovertemplate: `<b>Site: ${site}</b><br>Theoretical: %{x}<br>Sample: %{y}<extra></extra>`
+                });
+            });
+            
+            // Identity lines with offsets
+            uniqueSites.forEach((site, groupIdx) => {
+                const siteOffset = groupIdx * 1.0 - 2;
+                const identityX = [...lineX];
+                const identityY = lineY.map(y => y + siteOffset);
+                
+                traces.push({
+                    x: identityX,
+                    y: identityY,
+                    mode: 'lines',
+                    name: `${site} identity`,
+                    type: 'scatter',
+                    line: { color: '#afafaf', dash: 'dash', width: 2 },
+                    opacity: 1,
+                    showlegend: false,
+                    hovertemplate: `Identity line<br>Site: ${site}<extra></extra>`
+                });
+            });
+            
+            const layout = {
+                xaxis: { title: 'Theoretical', showgrid: true, gridcolor: 'lightgrey' },
+                yaxis: { title: 'Sample', showgrid: true, gridcolor: 'lightgrey' },
+                hovermode: 'closest',
+                showlegend: false,
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                margin: { l: 60, r: 20, t: 20, b: 60 },
+                font: { size: 14 }
+            };
+            
+            Plotly.newPlot('raw-plot-3', traces, layout, { responsive: true });
+        }
+
+        renderAlgorithmPlot1() {
+        console.log('SimulationPage: Starting algorithm plot 1 render');
+        
+        try {
+            const algorithmData = this.scenarioData.norming_results[this.currentAlgorithm];
+            const rawData = this.scenarioData.raw_data;
+            
+            console.log('SimulationPage: Algorithm data keys:', Object.keys(algorithmData));
+            
+            const sites = [...new Set(rawData.site)];
+            const ages = algorithmData.age;
+            const scores = algorithmData.cognitive_score;
+            const siteArray = rawData.site;
+            
+            const traces = [];
+            
+            // Add scatter points for each site
+            sites.forEach((site, i) => {
+                const mask = siteArray.map(s => s === site);
+                const siteAges = ages.filter((age, idx) => mask[idx]);
+                const siteScores = scores.filter((score, idx) => mask[idx]);
+                const color = this.colors[i % this.colors.length];
+                
+                traces.push({
+                    x: siteAges,
+                    y: siteScores,
+                    mode: 'markers',
+                    name: String(site),
+                    type: 'scatter',
+                    marker: {
+                        size: 12,
+                        color: color,
+                        opacity: 1,
+                        line: { width: 0.5, color: 'white' }
+                    },
+                    hovertemplate: `<b>Site: ${site}</b><br>Age: %{x}<br>Cognitive Score: %{y}<extra></extra>`
+                });
+            });
+            
+            // Add regression curve(s) based on algorithm
+            const regressionData = algorithmData.regression_curve;
+
+            if (this.currentAlgorithm === 'hbr') {
+                // HBR: Multiple centile curves - sort by age
+                const sortedIndices = regressionData.age_points
+                    .map((age, index) => ({ age, index }))
+                    .sort((a, b) => a.age - b.age)
+                    .map(item => item.index);
+                
+                const sortedAges = sortedIndices.map(i => regressionData.age_points[i]);
+                
+                const centileNames = ['c5', 'c25', 'fitted_values', 'c75', 'c95'];
+                const centileLabels = ['5th', '25th', '50th', '75th', '95th'];
+                const centileColors = ['#afafaf', '#afafaf', '#afafaf', '#afafaf', '#afafaf'];
+                const centileWidths = [3, 3, 4, 3, 3];
+                
+                centileNames.forEach((centile, idx) => {
+                    if (regressionData[centile] && regressionData[centile].length > 0) {
+                        const sortedValues = sortedIndices.map(i => regressionData[centile][i]);
+                        
+                        traces.push({
+                            x: sortedAges,
+                            y: sortedValues,
+                            mode: 'lines',
+                            name: `${centileLabels[idx]} Centile`,
+                            type: 'scatter',
+                            line: {
+                                color: centileColors[idx],
+                                width: centileWidths[idx],
+                                dash: centile === 'fitted_values' ? 'solid' : 'dash'
+                            },
+                            showlegend: false,
+                            hovertemplate: `${centileLabels[idx]} Centile<br>Age: %{x}<br>Score: %{y}<extra></extra>`
+                        });
+                    }
+                });
+            } else {
+                // bins_10yr, bins_5yr, loess: Single regression curve - sort by age
+                const combined = regressionData.age_points.map((age, index) => ({
+                    age: age,
+                    fitted: regressionData.fitted_values[index]
+                })).sort((a, b) => a.age - b.age);
+                
+                traces.push({
+                    x: combined.map(item => item.age),
+                    y: combined.map(item => item.fitted),
+                    mode: 'lines',
+                    name: `${this.currentAlgorithm.toUpperCase()} Regression`,
+                    type: 'scatter',
+                    line: {
+                        color: '#afafaf',
+                        width: 8
+                    },
+                    showlegend: false,
+                    hovertemplate: `${this.currentAlgorithm.toUpperCase()} Regression<br>Age: %{x}<br>Fitted Value: %{y}<extra></extra>`
+                });
+            }
+            
+            const layout = {
+                xaxis: { title: 'Age', showgrid: true, gridcolor: 'lightgrey' },
+                yaxis: { title: 'Cognitive Score', showgrid: true, gridcolor: 'lightgrey' },
+                hovermode: 'closest',
+                showlegend: false,
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                margin: { l: 60, r: 20, t: 20, b: 60 },
+                font: { size: 14 }
+            };
+            
+            console.log('SimulationPage: About to create algorithm plot 1');
+            Plotly.newPlot('algorithm-plot-1', traces, layout, { responsive: true });
+            console.log('SimulationPage: Algorithm plot 1 created successfully');
+            
+        } catch (error) {
+            console.error('SimulationPage: Error rendering algorithm plot 1:', error);
+        }
+    }
+
+    renderAlgorithmPlot2() {
+    console.log('SimulationPage: Starting algorithm plot 2 render (z-scores histogram)');
+    
+    try {
+        const algorithmData = this.scenarioData.norming_results[this.currentAlgorithm];
+        const rawData = this.scenarioData.raw_data;
+        
+        const sites = [...new Set(rawData.site)];
+        const zScores = algorithmData.z_scores;
+        const siteArray = rawData.site;
+        
+        const traces = [];
+        
+        // Add histogram and KDE for each site
+        sites.forEach((site, i) => {
+            const mask = siteArray.map(s => s === site);
+            const siteZScores = zScores.filter((score, idx) => mask[idx]);
+            const color = this.colors[i % this.colors.length];
+            
+            if (siteZScores.length === 0) return;
+            
+            // Add histogram
+            traces.push({
+                x: siteZScores,
+                name: String(site),
+                type: 'histogram',
+                nbinsx: 20,
+                opacity: 0.6,
+                marker: { color: color },
+                histnorm: 'probability density',
+                showlegend: false
+            });
+            
+            // Calculate and add KDE curve (simplified version)
+            if (siteZScores.length > 1) {
+                const sortedScores = [...siteZScores].sort((a, b) => a - b);
+                const min = sortedScores[0];
+                const max = sortedScores[sortedScores.length - 1];
+                const range = max - min;
+                const bandwidth = range / 10; // Simple bandwidth estimation
+                
+                // Create KDE approximation using overlapping gaussians
+                const xRange = [];
+                const kdeValues = [];
+                
+                for (let x = min - range * 0.2; x <= max + range * 0.2; x += range / 100) {
+                    xRange.push(x);
+                    let density = 0;
+                    
+                    siteZScores.forEach(score => {
+                        const gaussian = Math.exp(-0.5 * Math.pow((x - score) / bandwidth, 2)) / 
+                                       (bandwidth * Math.sqrt(2 * Math.PI));
+                        density += gaussian;
+                    });
+                    
+                    kdeValues.push(density / siteZScores.length);
+                }
+                
+                // Add KDE curve
+                traces.push({
+                    x: xRange,
+                    y: kdeValues,
+                    mode: 'lines',
+                    name: `${site}_kde`,
+                    line: { color: color, width: 4 },
+                    showlegend: false,
+                    type: 'scatter'
+                });
+            }
+        });
+        
+        const layout = {
+            xaxis: { title: 'Z-Score', showgrid: true, gridcolor: 'lightgrey' },
+            yaxis: { title: 'Density', showgrid: true, gridcolor: 'lightgrey' },
+            hovermode: 'closest',
+            showlegend: false,
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            margin: { l: 60, r: 20, t: 20, b: 60 },
+            font: { size: 14 },
+            barmode: 'overlay'
+        };
+        
+        console.log('SimulationPage: About to create algorithm plot 2 (z-scores)');
+        Plotly.newPlot('algorithm-plot-2', traces, layout, { responsive: true });
+        console.log('SimulationPage: Algorithm plot 2 created successfully');
+        
+    } catch (error) {
+        console.error('SimulationPage: Error rendering algorithm plot 2:', error);
+    }
+}
+
+renderAlgorithmPlot3() {
+    console.log('SimulationPage: Starting algorithm plot 3 render (residuals Q-Q plot)');
+    
+    try {
+        const algorithmData = this.scenarioData.norming_results[this.currentAlgorithm];
+        const qqData = algorithmData.qq_data;
+        
+        // Filter out null and 'nan' values from sites
+        const sitesData = qqData.sites.filter(x => x !== null && x !== 'nan' && x !== undefined);
+        const uniqueSites = [...new Set(sitesData)];
+        
+        const theoretical = qqData.theoretical;
+        const sample = qqData.sample;
+        const sitesArray = qqData.sites;
+        
+        // Get identity line coordinates (first two elements)
+        const lineX = qqData.identity_line.x.slice(0, 2);
+        const lineY = qqData.identity_line.y.slice(0, 2);
+        
+        const traces = [];
+        
+        // Add scatter points for each site
+        uniqueSites.forEach((site, i) => {
+            const mask = sitesArray.map(s => s === site);
+            const siteTheoretical = theoretical.filter((val, idx) => mask[idx]);
+            const siteSample = sample.filter((val, idx) => mask[idx]);
+            const color = this.colors[i % this.colors.length];
+            
+            traces.push({
+                x: siteTheoretical,
+                y: siteSample,
+                mode: 'markers',
+                name: String(site),
+                type: 'scatter',
+                marker: {
+                    size: 12,
+                    color: color,
+                    opacity: 1,
+                    line: { width: 0.5, color: 'white' }
+                },
+                hovertemplate: `<b>Site: ${site}</b><br>Theoretical: %{x}<br>Sample: %{y}<extra></extra>`
+            });
+        });
+        
+        // Add identity lines for each site (with offsets)
+        uniqueSites.forEach((site, groupIdx) => {
+            // Calculate offset for this site
+            const siteOffset = groupIdx * 1.0 - 2;
+            
+            // Create identity line with site-specific offset
+            const identityX = [...lineX]; // Same x-coordinates
+            const identityY = lineY.map(y => y + siteOffset); // Y-coordinates shifted by site offset
+            
+            traces.push({
+                x: identityX,
+                y: identityY,
+                mode: 'lines',
+                name: `${site} identity`,
+                type: 'scatter',
+                line: {
+                    color: '#afafaf',
+                    dash: 'dash',
+                    width: 2
+                },
+                opacity: 1,
+                showlegend: false,
+                hovertemplate: `Identity line<br>Site: ${site}<extra></extra>`
+            });
+        });
+        
+        const layout = {
+            xaxis: { title: 'Theoretical Quantiles', showgrid: true, gridcolor: 'lightgrey' },
+            yaxis: { title: 'Sample Quantiles (Residuals)', showgrid: true, gridcolor: 'lightgrey' },
+            hovermode: 'closest',
+            showlegend: false,
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            margin: { l: 60, r: 20, t: 20, b: 60 },
+            font: { size: 14 }
+        };
+        
+        console.log('SimulationPage: About to create algorithm plot 3 (residuals Q-Q)');
+        Plotly.newPlot('algorithm-plot-3', traces, layout, { responsive: true });
+        console.log('SimulationPage: Algorithm plot 3 created successfully');
+        
+    } catch (error) {
+        console.error('SimulationPage: Error rendering algorithm plot 3:', error);
+    }
+}
+
+
+    }
+    
+    // Make SimulationPage available globally
+    window.SimulationPage = SimulationPage;
+    </script>
+
+<script>
+    console.log('TEST: simulation.html loaded');
+    console.log('TEST: window.SimulationPage exists?', typeof window.SimulationPage);
+    </script>
+
+<script>
+    console.log('TEST: simulation.html script section executed');
+    console.log('TEST: SimulationPage class defined?', typeof SimulationPage);
+    </script>
