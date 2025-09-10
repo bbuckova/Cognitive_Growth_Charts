@@ -1,80 +1,72 @@
 <div class="intro-content">
-    <h2>About This Dashboard</h2>
-    <p>This interactive dashboard presents <strong>Cognitive Growth Charts</strong>, a new method for establishing cognitive norms. It highlights and clarifies the differences among methods used in the past and present to derive these norms, including binning, linear regression, and the Hierarchical Bayesian method (HBR). HBR can account for both nonlinear and non-Gaussian relationships, as well as differences in demographic variables (such as age, sex, and site), and provides improved standardized reference cohorts for cognitive assessments. For more information on the project, see <a href="https://precognition-project.org/" target="_blank" rel="noopener">PRECOGNITION</a>. And the paper <a href="https://academic.oup.com/schizbullopen/article/6/1/sgaf007/8109912" target="_blank" rel="noopener">Learning Latent Profiles via Cognitive Growth Charting in Psychosis: Design and Rationale for the PRECOGNITION Project</a>.</p>
-    
-    <h3>Simulation Starting Guide</h3>
-    <p>
-    Select <b>Simulation</b> from the left sidebar to explore the interactive visualization tool on simulated data. 
-    This tool allows you to see how different <i>data conditions</i> and 
-    <i>modeling choices</i> affect your normed cognitive scores. 
-    </p>
+  <h2>About This Dashboard</h2>
+  <p>
+    This interactive dashboard presents <strong>Cognitive Growth Charts</strong>, a new method for establishing 
+    cognitive norms. It highlights and clarifies the differences among methods used in the past and present to derive 
+    these norms, including binning, linear regression, and the Hierarchical Bayesian method (HBR). HBR can account for 
+    both nonlinear and non-Gaussian relationships, as well as differences in demographic variables (such as age, sex, 
+    and site), and provides improved standardized reference cohorts for cognitive assessments. For more information on 
+    the project, see <a href="https://precognition-project.org/" target="_blank" rel="noopener">PRECOGNITION</a> and the 
+    paper <a href="https://academic.oup.com/schizbullopen/article/6/1/sgaf007/8109912" target="_blank" rel="noopener">
+      Learning Latent Profiles via Cognitive Growth Charting in Psychosis: Design and Rationale for the PRECOGNITION Project
+    </a>.
+  </p>
 
-    <p>
-    You can adjust several parameters that often occur in real-world data:
-    <ul>
-        <li><b>Site effects</b>: differences in results due to data being collected at different locations.</li>
-        <li><b>Heteroscedasticity</b>: when the variability of data points changes across values (e.g., scores change with age).</li>
-        <li><b>Distribution shape</b>: whether the data follow a <i>normal</i> (bell-shaped), <i>skewed</i> (shifted to one side), 
-            or <i>kurtotic</i> (more peaked or flat than normal) distribution.</li>
-    </ul>
-    </p>
+  <h3>Simulation Starting Guide</h3>
+  <p>Select <b>Simulation</b> from the left sidebar to explore the interactive visualization tool on simulated data. 
+     This tool allows you to see how different <i>data conditions</i> and <i>modeling choices</i> affect your normed 
+     cognitive scores.</p>
 
-    <p>
-    The raw data are then visualized using:
-    <ol>
-        <li><b>Scatter plots</b>: show the relationship between age and cognitive score.</li>
-        <li><b>Distribution plots</b>: show how scores are spread out across participants.</li>
-        <li><b>Q-Q plots</b>: compare the observed data to a theoretical distribution to check normality.</li>
-    </ol>
-    </p>
+  <p>You can adjust several parameters that often occur in real-world data:</p>
+  <ul>
+    <li><b>Site effects</b>: differences in results due to data being collected at different locations.</li>
+    <li><b>Heteroscedasticity</b>: when the variability of data points changes across values (e.g., scores change with age).</li>
+    <li><b>Distribution shape</b>: whether the data follow a <i>normal</i> (bell-shaped), <i>skewed</i> (shifted to one side), 
+        or <i>kurtotic</i> (more peaked or flat than normal) distribution.</li>
+  </ul>
 
-    <p>
-    Afterwards you can apply different modeling algorithms to the data to make them normally distributed:
-    <ol>
-        <li><b>10-Year Bins</b>: groups ages into 10-year intervals and calculates averages.</li>
-        <li><b>5-Year Bins</b>: similar to 10-year bins but with finer resolution.</li>
-        <li><b>LOESS</b>: a smoothing method that fits flexible curves to the data.</li>
-        <li><b>HBR</b> (Hierarchical Bayesian Regression): a statistical model that accounts for variation across sites and produces centile curves.</li>
-    </ol>
-    </p>
+  <p>The raw data are then visualized using:</p>
+  <ul>
+    <li><b>Scatter plots</b>: show the relationship between age and cognitive score.</li>
+    <li><b>Distribution plots</b>: show how scores are spread out across participants.</li>
+    <li><b>Q-Q plots</b>: compare the observed data to a theoretical distribution to check normality.</li>
+  </ul>
 
-    <p>
-    The algorithm results are displayed through:
-    <ol>
-        <li><b>Regression or centile curves</b>: fitted lines showing trends or (per)centiles.</li>
-        <li><b>Pseudo z-score distributions</b>: standardized scores showing how individuals compare to the norm.</li>
-        <li><b>Residual Q-Q plots</b>: check whether the model’s errors (residuals) follow the expected distribution.</li>
-    </ol>
-    </p>
+  <p>Afterwards you can apply different modeling algorithms to the data to make them normally distributed:</p>
+  <ul>
+    <li><b>10-Year Bins</b>: groups ages into 10-year intervals and calculates averages.</li>
+    <li><b>5-Year Bins</b>: similar to 10-year bins but with finer resolution.</li>
+    <li><b>LOESS</b>: a smoothing method that fits flexible curves to the data.</li>
+    <li><b>HBR</b> (Hierarchical Bayesian Regression): a statistical model that accounts for variation across sites and produces centile curves.</li>
+  </ul>
 
-    <p>
-    Together, these features provide an intuitive way to understand how different modeling choices and data conditions influence the analysis of cognitive scores.
-    </p>
+  <p>The algorithm results are displayed through:</p>
+  <ul>
+    <li><b>Regression or centile curves</b>: fitted lines showing trends or (per)centiles.</li>
+    <li><b>Pseudo z-score distributions</b>: standardized scores showing how individuals compare to the norm.</li>
+    <li><b>Residual Q-Q plots</b>: check whether the model’s errors (residuals) follow the expected distribution.</li>
+  </ul>
 
-    <h3>Visualization Cognitive Tests</h3>
-    <p>
-    Afterwards, to understand better the effects of the modeling choice on the normed features, you can select one of the available <b>Cognitive Tests</b> from the left sidebar to view its normative model. Each test includes interactive visualizations that allow you to explore how cognitive models change across age and how it varies under different modeling approaches. 
-    </p>
+  <p>Together, these features provide an intuitive way to understand how different modeling choices and data conditions influence the analysis of cognitive scores.</p>
 
-    <p>
-    For each test, you can:
-    <ol>
-        <li><b>View raw data patterns</b> – scatter plots and distributions showing how scores are spread across ages and sites.</li>
-        <li><b>Apply normative modeling</b> – here you can explore the effects of applying HBR to the different cognitive tests.</li>
-        <li><b>Check model results</b> – fitted curves, centiles, z-score distributions, and Q-Q plots that illustrate how well the HBR algorithm captures the data.</li>
-    </ol>
-    </p>
+  <h3>Visualization Cognitive Tests</h3>
+  <p>Afterwards, to better understand the effects of the modeling choice on the normed features, you can select one of the available <b>Cognitive Tests</b> from the left sidebar to view its normative model. Each test includes interactive visualizations that allow you to explore how cognitive models change across age and under different approaches.</p>
 
-    <h3>Next Steps</h3>
-    <p>
-    Of course, after exploring this amazing tool you may want to learn more and adapt it to your own dataset. 
-    Several features are available to help you do this:
-    </p>
+  <p>For each test, you can:</p>
+  <ul>
+    <li><b>View raw data patterns</b> – scatter plots and distributions showing how scores are spread across ages and sites.</li>
+    <li><b>Apply normative modeling</b> – here you can explore the effects of applying HBR to the different cognitive tests.</li>
+    <li><b>Check model results</b> – fitted curves, centiles, z-score distributions, and Q-Q plots that illustrate how well the HBR algorithm captures the data.</li>
+  </ul>
 
-    <ol>
+  <h3>Next Steps</h3>
+  <p>Of course, after exploring this tool you may want to learn more and adapt it to your own dataset. 
+     Several features are available to help you do this:</p>
+
+  <ol>
     <li><b>Export data and model parameters</b>: download the underlying data and models so you can combine them with your own dataset or extend the public datasets.</li>
     <li><b>Export high-resolution images</b>: save publication-quality figures from any of the visualizations.</li>
-    </ol>
+  </ol>
 </div>
 
 <footer class="site-footer">
