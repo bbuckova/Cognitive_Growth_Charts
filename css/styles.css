@@ -287,3 +287,20 @@ body {
     border: 1px solid rgba(34, 197, 94, 0.2);
     margin: 20px 0;
 }
+
+.site-footer {
+  text-align: center;
+  padding: 20px;
+  margin-top: 40px;
+  font-size: 0.9em;
+  color: #555;
+  border-top: 1px solid #ddd;
+  background: #f9f9f9;
+}
+.site-footer a {
+  color: #39c0ba;
+  text-decoration: none;
+}
+.site-footer a:hover {
+  text-decoration: underline;
+}
