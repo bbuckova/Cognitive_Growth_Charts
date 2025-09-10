@@ -230,6 +230,17 @@ body {
     margin-bottom: 15px;
 }
 
+.intro-content ul,
+.intro-content ol {
+  margin: 0 0 1em 0;   
+  padding-left: 1.2em; 
+}
+
+.intro-content li {
+  margin-bottom: 0.5em;
+  line-height: 1.6;
+}
+
 /* Loading states */
 .loading-spinner {
     display: inline-block;
