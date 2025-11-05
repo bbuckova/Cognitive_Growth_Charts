@@ -255,6 +255,20 @@
             await this.loadCurrentScenario();
             console.log('SimulationPage: Initial scenario loaded');
         }
+
+        darkenColor(color, factor) {
+            // Convert hex to RGB, darken, convert back
+            const hex = color.replace('#', '');
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            
+            const darkerR = Math.round(r * (1 - factor));
+            const darkerG = Math.round(g * (1 - factor));
+            const darkerB = Math.round(b * (1 - factor));
+            
+            return `#${darkerR.toString(16).padStart(2, '0')}${darkerG.toString(16).padStart(2, '0')}${darkerB.toString(16).padStart(2, '0')}`;
+        }
         
         setupEventListeners() {
             // Simulation Parameters
@@ -308,7 +322,7 @@
                         const key = `${se}_${h}_${d}`;
                         // Format with leading zeros and _complete suffix
                         const scenarioNum = scenarioIndex.toString().padStart(3, '0');
-                        this.scenarioMapping[key] = `scenario_${scenarioNum}_complete`;
+                        this.scenarioMapping[key] = `scenario_${scenarioNum}_patients`;
                         scenarioIndex++;
                     });
                 });
@@ -387,36 +401,70 @@
             
             try {
                 const data = this.scenarioData.raw_data;
-                console.log('SimulationPage: Raw data structure:', Object.keys(data));
-                
-                const sites = data.site_names;
+                const sites = [0, 1, 2]; 
                 const ages = data.age;
                 const scores = data.cognitive_score;
                 const siteArray = data.site;
+                const patientStatus = data.patient_status; // NEW: Get patient status
                 
                 console.log('SimulationPage: Data arrays lengths - ages:', ages?.length, 'scores:', scores?.length, 'sites:', sites?.length);
                 
-                const traces = sites.map((site, i) => {
-                    const mask = siteArray.map(s => s === i);
+                const traces = [];
+                
+                // Add traces for each site - CONTROLS FIRST
+                sites.forEach((site, i) => {
+                    const mask = siteArray.map((s, idx) => s === i && patientStatus[idx] === 0); // Only controls
                     const siteAges = ages.filter((age, idx) => mask[idx]);
                     const siteScores = scores.filter((score, idx) => mask[idx]);
                     
-                    console.log(`SimulationPage: Site ${site} has ${siteAges.length} data points`);
+                    console.log(`SimulationPage: Site ${site} has ${siteAges.length} control data points`);
                     
-                    return {
+                    traces.push({
                         x: siteAges,
                         y: siteScores,
                         mode: 'markers',
-                        name: site,
+                        name: `${site} (Control)`,
                         type: 'scatter',
                         marker: {
-                            size: 12,
+                            size: 8,
                             color: this.colors[i % this.colors.length],
-                            opacity: 1,
+                            opacity: 0.6,
+                            symbol: 'circle',
                             line: { width: 0.5, color: 'white' }
                         },
-                        hovertemplate: `<b>${site}</b><br>Age: %{x}<br>Cognitive Score: %{y}<extra></extra>`
-                    };
+                        hovertemplate: `<b>${site} (Control)</b><br>Age: %{x}<br>Cognitive Score: %{y}<extra></extra>`
+                    });
+                });
+                
+                // Add traces for PATIENTS (darker colors, bigger crosses, on top)
+                sites.forEach((site, i) => {
+                    const mask = siteArray.map((s, idx) => s === i && patientStatus[idx] === 1); // Only patients
+                    const siteAges = ages.filter((age, idx) => mask[idx]);
+                    const siteScores = scores.filter((score, idx) => mask[idx]);
+                    
+                    console.log(`SimulationPage: Site ${site} has ${siteAges.length} patient data points`);
+                    
+                    if (siteAges.length > 0) {
+                        // Create darker shade of the site color
+                        const baseColor = this.colors[i % this.colors.length];
+                        const darkerColor = this.darkenColor(baseColor, 0.4); // 40% darker
+                        
+                        traces.push({
+                            x: siteAges,
+                            y: siteScores,
+                            mode: 'markers',
+                            name: `${site} (Patient)`,
+                            type: 'scatter',
+                            marker: {
+                                size: 12,
+                                color: darkerColor,
+                                opacity: 1,
+                                symbol: 'x',
+                                line: { width: 2, color: darkerColor }
+                            },
+                            hovertemplate: `<b>${site} (Patient)</b><br>Age: %{x}<br>Cognitive Score: %{y}<extra></extra>`
+                        });
+                    }
                 });
                 
                 const layout = {
@@ -439,446 +487,616 @@
         }
         
         renderDistributionPlot() {
-            const data = this.scenarioData.raw_data;
-            const sites = [...new Set(data.site)];
-            const scores = data.cognitive_score;
-            const siteArray = data.site;
+            console.log('SimulationPage: Starting distribution plot render');
             
-            const traces = [];
-            
-            sites.forEach((site, i) => {
-                const mask = siteArray.map(s => s === site);
-                const siteScores = scores.filter((score, idx) => mask[idx]);
-                const color = this.colors[i % this.colors.length];
+            try {
+                const data = this.scenarioData.raw_data;
+                const sites = [0, 1, 2]; // Or however many sites you have
+                const siteNames = data.site_names || this.scenarioData.raw_data.site_names;
+                const scores = data.cognitive_score;
+                const siteArray = data.site;
+                const patientStatus = data.patient_status; // NEW: Get patient status
                 
-                if (siteScores.length === 0) return;
+                const traces = [];
                 
-                // Histogram
-                traces.push({
-                    x: siteScores,
-                    name: String(site),
-                    type: 'histogram',
-                    nbinsx: 20,
-                    opacity: 0.6,
-                    marker: { color: color },
-                    histnorm: 'probability density',
-                    showlegend: false
+                // Add histogram and KDE for each site (ALL subjects - controls + patients)
+                sites.forEach((site, i) => {
+                    const mask = siteArray.map(s => s === site);
+                    const siteScores = scores.filter((score, idx) => mask[idx]);
+                    const color = this.colors[i % this.colors.length];
+                    
+                    if (siteScores.length === 0) return;
+                    
+                    // Add histogram (includes all subjects)
+                    traces.push({
+                        x: siteScores,
+                        name: String(site),
+                        type: 'histogram',
+                        nbinsx: 20,
+                        opacity: 0.6,
+                        marker: { color: color },
+                        histnorm: 'probability density',
+                        showlegend: false
+                    });
+                    
+                    // Calculate and add KDE curve (simplified version)
+                    if (siteScores.length > 1) {
+                        const sortedScores = [...siteScores].sort((a, b) => a - b);
+                        const min = sortedScores[0];
+                        const max = sortedScores[sortedScores.length - 1];
+                        const range = max - min;
+                        const bandwidth = range / 10;
+                        
+                        const xRange = [];
+                        const kdeValues = [];
+                        
+                        for (let x = min - range * 0.2; x <= max + range * 0.2; x += range / 100) {
+                            xRange.push(x);
+                            let density = 0;
+                            
+                            siteScores.forEach(score => {
+                                const gaussian = Math.exp(-0.5 * Math.pow((x - score) / bandwidth, 2)) / 
+                                            (bandwidth * Math.sqrt(2 * Math.PI));
+                                density += gaussian;
+                            });
+                            
+                            kdeValues.push(density / siteScores.length);
+                        }
+                        
+                        traces.push({
+                            x: xRange,
+                            y: kdeValues,
+                            mode: 'lines',
+                            name: `${site}_kde`,
+                            line: { color: color, width: 4 },
+                            showlegend: false,
+                            type: 'scatter'
+                        });
+                    }
                 });
                 
-                // Simple KDE approximation
-                if (siteScores.length > 1) {
-                    const sortedScores = [...siteScores].sort((a, b) => a - b);
-                    const min = sortedScores[0];
-                    const max = sortedScores[sortedScores.length - 1];
-                    const range = max - min;
-                    const bandwidth = range / 10;
+                // Add RUG PLOT for patients (markers at bottom)
+                sites.forEach((site, i) => {
+                    const mask = siteArray.map((s, idx) => s === site && patientStatus[idx] === 1); // Only patients
+                    const patientScores = scores.filter((score, idx) => mask[idx]);
                     
-                    const xRange = [];
-                    const kdeValues = [];
-                    
-                    for (let x = min - range * 0.2; x <= max + range * 0.2; x += range / 100) {
-                        xRange.push(x);
-                        let density = 0;
+                    if (patientScores.length > 0) {
+                        const darkerColor = this.darkenColor(this.colors[i % this.colors.length], 0.4);
                         
-                        siteScores.forEach(score => {
-                            const gaussian = Math.exp(-0.5 * Math.pow((x - score) / bandwidth, 2)) / 
-                                           (bandwidth * Math.sqrt(2 * Math.PI));
-                            density += gaussian;
+                        traces.push({
+                            x: patientScores,
+                            y: Array(patientScores.length).fill(0), // At y=0 (bottom of plot)
+                            mode: 'markers',
+                            name: `${site}_patients`,
+                            type: 'scatter',
+                            marker: {
+                                symbol: 'x', // Vertical tick marks
+                                size: 12,
+                                color: darkerColor,
+                                line: { width: 2, color: darkerColor }
+                            },
+                            showlegend: false,
+                            hovertemplate: `<b>Site ${site} (Patient)</b><br>Cognitive Score: %{x}<extra></extra>`
                         });
-                        
-                        kdeValues.push(density / siteScores.length);
                     }
-                    
-                    traces.push({
-                        x: xRange,
-                        y: kdeValues,
-                        mode: 'lines',
-                        name: `${site}_kde`,
-                        line: { color: color, width: 4 },
-                        showlegend: false,
-                        type: 'scatter'
-                    });
-                }
-            });
-            
-            const layout = {
-                xaxis: { title: 'Cognitive Score', showgrid: true, gridcolor: 'lightgrey' },
-                yaxis: { title: 'Density', showgrid: true, gridcolor: 'lightgrey' },
-                hovermode: 'closest',
-                showlegend: false,
-                plot_bgcolor: 'rgba(0,0,0,0)',
-                margin: { l: 60, r: 20, t: 20, b: 60 },
-                font: { size: 14 },
-                barmode: 'overlay'
-            };
-            
-            Plotly.newPlot('raw-plot-2', traces, layout, { responsive: true });
+                });
+                
+                const layout = {
+                    xaxis: { title: 'Cognitive Score', showgrid: true, gridcolor: 'lightgrey' },
+                    yaxis: { title: 'Density', showgrid: true, gridcolor: 'lightgrey' },
+                    hovermode: 'closest',
+                    showlegend: false,
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    margin: { l: 60, r: 20, t: 20, b: 60 },
+                    font: { size: 14 },
+                    barmode: 'overlay'
+                };
+                
+                console.log('SimulationPage: About to create distribution plot');
+                Plotly.newPlot('raw-plot-2', traces, layout, { responsive: true });
+                console.log('SimulationPage: Distribution plot created successfully');
+                
+            } catch (error) {
+                console.error('SimulationPage: Error rendering distribution plot:', error);
+            }
         }
         
         renderQQPlot() {
-            const qqData = this.scenarioData.raw_data.qq_data;
-            const sitesData = qqData.sites.filter(x => x !== null && x !== 'nan' && x !== undefined);
-            const uniqueSites = [...new Set(sitesData)];
-            const theoretical = qqData.theoretical;
-            const sample = qqData.sample;
-            const sitesArray = qqData.sites;
-            const lineX = qqData.identity_line.x.slice(0, 2);
-            const lineY = qqData.identity_line.y.slice(0, 2);
+            console.log('SimulationPage: Starting Q-Q plot render');
             
-            const traces = [];
-            
-            // Scatter points for each site
-            uniqueSites.forEach((site, i) => {
-                const mask = sitesArray.map(s => s === site);
-                const siteTheoretical = theoretical.filter((val, idx) => mask[idx]);
-                const siteSample = sample.filter((val, idx) => mask[idx]);
-                const color = this.colors[i % this.colors.length];
-                
-                traces.push({
-                    x: siteTheoretical,
-                    y: siteSample,
-                    mode: 'markers',
-                    name: String(site),
-                    type: 'scatter',
-                    marker: {
-                        size: 12,
-                        color: color,
-                        opacity: 1,
-                        line: { width: 0.5, color: 'white' }
-                    },
-                    hovertemplate: `<b>Site: ${site}</b><br>Theoretical: %{x}<br>Sample: %{y}<extra></extra>`
-                });
-            });
-            
-            // Identity lines with offsets
-            uniqueSites.forEach((site, groupIdx) => {
-                const siteOffset = groupIdx * 1.0 - 2;
-                const identityX = [...lineX];
-                const identityY = lineY.map(y => y + siteOffset);
-                
-                traces.push({
-                    x: identityX,
-                    y: identityY,
-                    mode: 'lines',
-                    name: `${site} identity`,
-                    type: 'scatter',
-                    line: { color: '#afafaf', dash: 'dash', width: 2 },
-                    opacity: 1,
-                    showlegend: false,
-                    hovertemplate: `Identity line<br>Site: ${site}<extra></extra>`
-                });
-            });
-            
-            const layout = {
-                xaxis: { title: 'Theoretical', showgrid: true, gridcolor: 'lightgrey' },
-                yaxis: { title: 'Sample', showgrid: true, gridcolor: 'lightgrey' },
-                hovermode: 'closest',
-                showlegend: false,
-                plot_bgcolor: 'rgba(0,0,0,0)',
-                margin: { l: 60, r: 20, t: 20, b: 60 },
-                font: { size: 14 }
-            };
-            
-            Plotly.newPlot('raw-plot-3', traces, layout, { responsive: true });
-        }
+            try {
+                const qqData = this.scenarioData.raw_data.qq_data;
+                const patientStatus = qqData.patient_status; 
 
-        renderAlgorithmPlot1() {
-        console.log('SimulationPage: Starting algorithm plot 1 render');
-        
-        try {
-            const algorithmData = this.scenarioData.norming_results[this.currentAlgorithm];
-            const rawData = this.scenarioData.raw_data;
-            
-            console.log('SimulationPage: Algorithm data keys:', Object.keys(algorithmData));
-            
-            const sites = [...new Set(rawData.site)];
-            const ages = algorithmData.age;
-            const scores = algorithmData.cognitive_score;
-            const siteArray = rawData.site;
-            
-            const traces = [];
-            
-            // Add scatter points for each site
-            sites.forEach((site, i) => {
-                const mask = siteArray.map(s => s === site);
-                const siteAges = ages.filter((age, idx) => mask[idx]);
-                const siteScores = scores.filter((score, idx) => mask[idx]);
-                const color = this.colors[i % this.colors.length];
+                // Filter out null and 'nan' values from sites
+                const sitesData = qqData.sites.filter(x => x !== null && x !== 'nan' && x !== undefined);
+                const uniqueSites = [...new Set(sitesData)];
                 
-                traces.push({
-                    x: siteAges,
-                    y: siteScores,
-                    mode: 'markers',
-                    name: String(site),
-                    type: 'scatter',
-                    marker: {
-                        size: 12,
-                        color: color,
-                        opacity: 1,
-                        line: { width: 0.5, color: 'white' }
-                    },
-                    hovertemplate: `<b>Site: ${site}</b><br>Age: %{x}<br>Cognitive Score: %{y}<extra></extra>`
+                const theoretical = qqData.theoretical;
+                const sample = qqData.sample;
+                const sitesArray = qqData.sites;
+                
+                // Get identity line coordinates (first two elements)
+                const lineX = qqData.identity_line.x.slice(0, 2);
+                const lineY = qqData.identity_line.y.slice(0, 2);
+                
+                const traces = [];
+                
+                // Add scatter points for each site - CONTROLS FIRST
+                uniqueSites.forEach((site) => {
+                    const siteIndex = parseInt(site); // Get actual site number
+                    const mask = sitesArray.map((s, idx) => s === site && patientStatus[idx] === 0); // Only controls
+                    const siteTheoretical = theoretical.filter((val, idx) => mask[idx]);
+                    const siteSample = sample.filter((val, idx) => mask[idx]);
+                    const color = this.colors[siteIndex % this.colors.length]; // ← Use siteIndex instead of i
+                    
+                    traces.push({
+                        x: siteTheoretical,
+                        y: siteSample,
+                        mode: 'markers',
+                        name: `${site} (Control)`,
+                        type: 'scatter',
+                        marker: {
+                            size: 8,
+                            color: color,
+                            opacity: 0.6,
+                            symbol: 'circle',
+                            line: { width: 0.5, color: 'white' }
+                        },
+                        hovertemplate: `<b>Site: ${site} (Control)</b><br>Theoretical: %{x}<br>Sample: %{y}<extra></extra>`
+                    });
                 });
-            });
-            
-            // Add regression curve(s) based on algorithm
-            const regressionData = algorithmData.regression_curve;
 
-            if (this.currentAlgorithm === 'hbr') {
-                // HBR: Multiple centile curves - sort by age
-                const sortedIndices = regressionData.age_points
-                    .map((age, index) => ({ age, index }))
-                    .sort((a, b) => a.age - b.age)
-                    .map(item => item.index);
-                
-                const sortedAges = sortedIndices.map(i => regressionData.age_points[i]);
-                
-                const centileNames = ['c5', 'c25', 'fitted_values', 'c75', 'c95'];
-                const centileLabels = ['5th', '25th', '50th', '75th', '95th'];
-                const centileColors = ['#afafaf', '#afafaf', '#afafaf', '#afafaf', '#afafaf'];
-                const centileWidths = [3, 3, 4, 3, 3];
-                
-                centileNames.forEach((centile, idx) => {
-                    if (regressionData[centile] && regressionData[centile].length > 0) {
-                        const sortedValues = sortedIndices.map(i => regressionData[centile][i]);
+                // Add scatter points for PATIENTS (darker colors, bigger crosses)
+                uniqueSites.forEach((site) => {
+                    const siteIndex = parseInt(site); // Get actual site number
+                    const mask = sitesArray.map((s, idx) => s === site && patientStatus[idx] === 1); // Only patients
+                    const siteTheoretical = theoretical.filter((val, idx) => mask[idx]);
+                    const siteSample = sample.filter((val, idx) => mask[idx]);
+                    
+                    if (siteTheoretical.length > 0) {
+                        const darkerColor = this.darkenColor(this.colors[siteIndex % this.colors.length], 0.4); // ← Use siteIndex
                         
                         traces.push({
-                            x: sortedAges,
-                            y: sortedValues,
-                            mode: 'lines',
-                            name: `${centileLabels[idx]} Centile`,
+                            x: siteTheoretical,
+                            y: siteSample,
+                            mode: 'markers',
+                            name: `${site} (Patient)`,
                             type: 'scatter',
-                            line: {
-                                color: centileColors[idx],
-                                width: centileWidths[idx],
-                                dash: centile === 'fitted_values' ? 'solid' : 'dash'
+                            marker: {
+                                size: 12,
+                                color: darkerColor,
+                                opacity: 1,
+                                symbol: 'x',
+                                line: { width: 2, color: darkerColor }
                             },
-                            showlegend: false,
-                            hovertemplate: `${centileLabels[idx]} Centile<br>Age: %{x}<br>Score: %{y}<extra></extra>`
+                            hovertemplate: `<b>Site: ${site} (Patient)</b><br>Theoretical: %{x}<br>Sample: %{y}<extra></extra>`
                         });
                     }
                 });
-            } else {
-                // bins_10yr, bins_5yr, loess: Single regression curve - sort by age
-                const combined = regressionData.age_points.map((age, index) => ({
-                    age: age,
-                    fitted: regressionData.fitted_values[index]
-                })).sort((a, b) => a.age - b.age);
                 
-                traces.push({
-                    x: combined.map(item => item.age),
-                    y: combined.map(item => item.fitted),
-                    mode: 'lines',
-                    name: `${this.currentAlgorithm.toUpperCase()} Regression`,
-                    type: 'scatter',
-                    line: {
-                        color: '#afafaf',
-                        width: 8
-                    },
-                    showlegend: false,
-                    hovertemplate: `${this.currentAlgorithm.toUpperCase()} Regression<br>Age: %{x}<br>Fitted Value: %{y}<extra></extra>`
-                });
-            }
-            
-            const layout = {
-                xaxis: { title: 'Age', showgrid: true, gridcolor: 'lightgrey' },
-                yaxis: { title: 'Cognitive Score', showgrid: true, gridcolor: 'lightgrey' },
-                hovermode: 'closest',
-                showlegend: false,
-                plot_bgcolor: 'rgba(0,0,0,0)',
-                margin: { l: 60, r: 20, t: 20, b: 60 },
-                font: { size: 14 }
-            };
-            
-            console.log('SimulationPage: About to create algorithm plot 1');
-            Plotly.newPlot('algorithm-plot-1', traces, layout, { responsive: true });
-            console.log('SimulationPage: Algorithm plot 1 created successfully');
-            
-        } catch (error) {
-            console.error('SimulationPage: Error rendering algorithm plot 1:', error);
-        }
-    }
-
-    renderAlgorithmPlot2() {
-    console.log('SimulationPage: Starting algorithm plot 2 render (z-scores histogram)');
-    
-    try {
-        const algorithmData = this.scenarioData.norming_results[this.currentAlgorithm];
-        const rawData = this.scenarioData.raw_data;
-        
-        const sites = [...new Set(rawData.site)];
-        const zScores = algorithmData.z_scores;
-        const siteArray = rawData.site;
-        
-        const traces = [];
-        
-        // Add histogram and KDE for each site
-        sites.forEach((site, i) => {
-            const mask = siteArray.map(s => s === site);
-            const siteZScores = zScores.filter((score, idx) => mask[idx]);
-            const color = this.colors[i % this.colors.length];
-            
-            if (siteZScores.length === 0) return;
-            
-            // Add histogram
-            traces.push({
-                x: siteZScores,
-                name: String(site),
-                type: 'histogram',
-                nbinsx: 20,
-                opacity: 0.6,
-                marker: { color: color },
-                histnorm: 'probability density',
-                showlegend: false
-            });
-            
-            // Calculate and add KDE curve (simplified version)
-            if (siteZScores.length > 1) {
-                const sortedScores = [...siteZScores].sort((a, b) => a - b);
-                const min = sortedScores[0];
-                const max = sortedScores[sortedScores.length - 1];
-                const range = max - min;
-                const bandwidth = range / 10; // Simple bandwidth estimation
-                
-                // Create KDE approximation using overlapping gaussians
-                const xRange = [];
-                const kdeValues = [];
-                
-                for (let x = min - range * 0.2; x <= max + range * 0.2; x += range / 100) {
-                    xRange.push(x);
-                    let density = 0;
+                // Add identity lines for each site (with offsets)
+                uniqueSites.forEach((site, groupIdx) => {
+                    const siteOffset = groupIdx * 1.0 - 2;
+                    const identityX = [...lineX];
+                    const identityY = lineY.map(y => y + siteOffset);
                     
-                    siteZScores.forEach(score => {
-                        const gaussian = Math.exp(-0.5 * Math.pow((x - score) / bandwidth, 2)) / 
-                                       (bandwidth * Math.sqrt(2 * Math.PI));
-                        density += gaussian;
+                    traces.push({
+                        x: identityX,
+                        y: identityY,
+                        mode: 'lines',
+                        name: `${site} identity`,
+                        type: 'scatter',
+                        line: {
+                            color: '#afafaf',
+                            dash: 'dash',
+                            width: 2
+                        },
+                        opacity: 1,
+                        showlegend: false,
+                        hovertemplate: `Identity line<br>Site: ${site}<extra></extra>`
                     });
+                });
+                
+                const layout = {
+                    xaxis: { title: 'Theoretical', showgrid: true, gridcolor: 'lightgrey' },
+                    yaxis: { title: 'Sample', showgrid: true, gridcolor: 'lightgrey' },
+                    hovermode: 'closest',
+                    showlegend: false,
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    margin: { l: 60, r: 20, t: 20, b: 60 },
+                    font: { size: 14 }
+                };
+                
+                console.log('SimulationPage: About to create Q-Q plot');
+                Plotly.newPlot('raw-plot-3', traces, layout, { responsive: true });
+                console.log('SimulationPage: Q-Q plot created successfully');
+                
+            } catch (error) {
+                console.error('SimulationPage: Error rendering Q-Q plot:', error);
+            }
+        }
+
+        renderAlgorithmPlot1() {
+            console.log('SimulationPage: Starting algorithm plot 1 render');
+            
+            try {
+                const algorithmData = this.scenarioData.norming_results[this.currentAlgorithm];
+                const rawData = this.scenarioData.raw_data;
+                const patientStatus = rawData.patient_status; // NEW: Get patient status
+                
+                console.log('SimulationPage: Algorithm data keys:', Object.keys(algorithmData));
+                
+                const sites = [0, 1, 2]; 
+                const siteNames = this.scenarioData.raw_data.site_names;
+                const ages = algorithmData.age;
+                const scores = algorithmData.cognitive_score;
+                const siteArray = rawData.site;
+                
+                const traces = [];
+                
+                // Add scatter points for each site - CONTROLS FIRST
+                sites.forEach((site, i) => {
+                    const mask = siteArray.map((s, idx) => s === site && patientStatus[idx] === 0); // Only controls
+                    const siteAges = ages.filter((age, idx) => mask[idx]);
+                    const siteScores = scores.filter((score, idx) => mask[idx]);
+                    const color = this.colors[i % this.colors.length];
                     
-                    kdeValues.push(density / siteZScores.length);
+                    traces.push({
+                        x: siteAges,
+                        y: siteScores,
+                        mode: 'markers',
+                        name: `${site} (Control)`,
+                        type: 'scatter',
+                        marker: {
+                            size: 8,
+                            color: color,
+                            opacity: 0.6,
+                            symbol: 'circle',
+                            line: { width: 0.5, color: 'white' }
+                        },
+                        hovertemplate: `<b>Site: ${site} (Control)</b><br>Age: %{x}<br>Cognitive Score: %{y}<extra></extra>`
+                    });
+                });
+                
+                // Add scatter points for PATIENTS (darker colors, bigger crosses)
+                sites.forEach((site, i) => {
+                    const mask = siteArray.map((s, idx) => s === site && patientStatus[idx] === 1); // Only patients
+                    const siteAges = ages.filter((age, idx) => mask[idx]);
+                    const siteScores = scores.filter((score, idx) => mask[idx]);
+                    
+                    if (siteAges.length > 0) {
+                        const darkerColor = this.darkenColor(this.colors[i % this.colors.length], 0.4);
+                        
+                        traces.push({
+                            x: siteAges,
+                            y: siteScores,
+                            mode: 'markers',
+                            name: `${site} (Patient)`,
+                            type: 'scatter',
+                            marker: {
+                                size: 12,
+                                color: darkerColor,
+                                opacity: 1,
+                                symbol: 'x',
+                                line: { width: 2, color: darkerColor }
+                            },
+                            hovertemplate: `<b>Site: ${site} (Patient)</b><br>Age: %{x}<br>Cognitive Score: %{y}<extra></extra>`
+                        });
+                    }
+                });
+                
+                // Add regression curve(s) based on algorithm
+                const regressionData = algorithmData.regression_curve;
+                
+                if (this.currentAlgorithm === 'hbr') {
+                    // HBR: Multiple centile curves - sort by age
+                    const sortedIndices = regressionData.age_points
+                        .map((age, index) => ({ age, index }))
+                        .sort((a, b) => a.age - b.age)
+                        .map(item => item.index);
+                    
+                    const sortedAges = sortedIndices.map(i => regressionData.age_points[i]);
+                    
+                    const centileNames = ['c5', 'c25', 'fitted_values', 'c75', 'c95'];
+                    const centileLabels = ['5th', '25th', '50th', '75th', '95th'];
+                    const centileColors = ['#cccccc', '#aaaaaa', '#666666', '#aaaaaa', '#cccccc'];
+                    const centileWidths = [2, 2, 4, 2, 2];
+                    
+                    centileNames.forEach((centile, idx) => {
+                        if (regressionData[centile] && regressionData[centile].length > 0) {
+                            const sortedValues = sortedIndices.map(i => regressionData[centile][i]);
+                            
+                            traces.push({
+                                x: sortedAges,
+                                y: sortedValues,
+                                mode: 'lines',
+                                name: `${centileLabels[idx]} Centile`,
+                                type: 'scatter',
+                                line: {
+                                    color: centileColors[idx],
+                                    width: centileWidths[idx],
+                                    dash: centile === 'fitted_values' ? 'solid' : 'dash'
+                                },
+                                showlegend: false,
+                                hovertemplate: `${centileLabels[idx]} Centile<br>Age: %{x}<br>Score: %{y}<extra></extra>`
+                            });
+                        }
+                    });
+                } else {
+                    // bins_10yr, bins_5yr, loess: Single regression curve - sort by age
+                    const combined = regressionData.age_points.map((age, index) => ({
+                        age: age,
+                        fitted: regressionData.fitted_values[index]
+                    })).sort((a, b) => a.age - b.age);
+                    
+                    traces.push({
+                        x: combined.map(item => item.age),
+                        y: combined.map(item => item.fitted),
+                        mode: 'lines',
+                        name: `${this.currentAlgorithm.toUpperCase()} Regression`,
+                        type: 'scatter',
+                        line: {
+                            color: '#afafaf',
+                            width: 8
+                        },
+                        showlegend: false,
+                        hovertemplate: `${this.currentAlgorithm.toUpperCase()} Regression<br>Age: %{x}<br>Fitted Value: %{y}<extra></extra>`
+                    });
                 }
                 
-                // Add KDE curve
-                traces.push({
-                    x: xRange,
-                    y: kdeValues,
-                    mode: 'lines',
-                    name: `${site}_kde`,
-                    line: { color: color, width: 4 },
+                const layout = {
+                    xaxis: { title: 'Age', showgrid: true, gridcolor: 'lightgrey' },
+                    yaxis: { title: 'Cognitive Score', showgrid: true, gridcolor: 'lightgrey' },
+                    hovermode: 'closest',
                     showlegend: false,
-                    type: 'scatter'
-                });
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    margin: { l: 60, r: 20, t: 20, b: 60 },
+                    font: { size: 14 }
+                };
+                
+                console.log('SimulationPage: About to create algorithm plot 1');
+                Plotly.newPlot('algorithm-plot-1', traces, layout, { responsive: true });
+                console.log('SimulationPage: Algorithm plot 1 created successfully');
+                
+            } catch (error) {
+                console.error('SimulationPage: Error rendering algorithm plot 1:', error);
             }
-        });
-        
-        const layout = {
-            xaxis: { title: 'Z-Score', showgrid: true, gridcolor: 'lightgrey' },
-            yaxis: { title: 'Density', showgrid: true, gridcolor: 'lightgrey' },
-            hovermode: 'closest',
-            showlegend: false,
-            plot_bgcolor: 'rgba(0,0,0,0)',
-            margin: { l: 60, r: 20, t: 20, b: 60 },
-            font: { size: 14 },
-            barmode: 'overlay'
-        };
-        
-        console.log('SimulationPage: About to create algorithm plot 2 (z-scores)');
-        Plotly.newPlot('algorithm-plot-2', traces, layout, { responsive: true });
-        console.log('SimulationPage: Algorithm plot 2 created successfully');
-        
-    } catch (error) {
-        console.error('SimulationPage: Error rendering algorithm plot 2:', error);
-    }
-}
+        }
 
-renderAlgorithmPlot3() {
-    console.log('SimulationPage: Starting algorithm plot 3 render (residuals Q-Q plot)');
-    
-    try {
-        const algorithmData = this.scenarioData.norming_results[this.currentAlgorithm];
-        const qqData = algorithmData.qq_data;
-        
-        // Filter out null and 'nan' values from sites
-        const sitesData = qqData.sites.filter(x => x !== null && x !== 'nan' && x !== undefined);
-        const uniqueSites = [...new Set(sitesData)];
-        
-        const theoretical = qqData.theoretical;
-        const sample = qqData.sample;
-        const sitesArray = qqData.sites;
-        
-        // Get identity line coordinates (first two elements)
-        const lineX = qqData.identity_line.x.slice(0, 2);
-        const lineY = qqData.identity_line.y.slice(0, 2);
-        
-        const traces = [];
-        
-        // Add scatter points for each site
-        uniqueSites.forEach((site, i) => {
-            const mask = sitesArray.map(s => s === site);
-            const siteTheoretical = theoretical.filter((val, idx) => mask[idx]);
-            const siteSample = sample.filter((val, idx) => mask[idx]);
-            const color = this.colors[i % this.colors.length];
+        renderAlgorithmPlot2() {
+            console.log('SimulationPage: Starting algorithm plot 2 render (z-scores histogram)');
             
-            traces.push({
-                x: siteTheoretical,
-                y: siteSample,
-                mode: 'markers',
-                name: String(site),
-                type: 'scatter',
-                marker: {
-                    size: 12,
-                    color: color,
-                    opacity: 1,
-                    line: { width: 0.5, color: 'white' }
-                },
-                hovertemplate: `<b>Site: ${site}</b><br>Theoretical: %{x}<br>Sample: %{y}<extra></extra>`
-            });
-        });
-        
-        // Add identity lines for each site (with offsets)
-        uniqueSites.forEach((site, groupIdx) => {
-            // Calculate offset for this site
-            const siteOffset = groupIdx * 1.0 - 2;
-            
-            // Create identity line with site-specific offset
-            const identityX = [...lineX]; // Same x-coordinates
-            const identityY = lineY.map(y => y + siteOffset); // Y-coordinates shifted by site offset
-            
-            traces.push({
-                x: identityX,
-                y: identityY,
-                mode: 'lines',
-                name: `${site} identity`,
-                type: 'scatter',
-                line: {
-                    color: '#afafaf',
-                    dash: 'dash',
-                    width: 2
-                },
-                opacity: 1,
-                showlegend: false,
-                hovertemplate: `Identity line<br>Site: ${site}<extra></extra>`
-            });
-        });
-        
-        const layout = {
-            xaxis: { title: 'Theoretical Quantiles', showgrid: true, gridcolor: 'lightgrey' },
-            yaxis: { title: 'Sample Quantiles (Residuals)', showgrid: true, gridcolor: 'lightgrey' },
-            hovermode: 'closest',
-            showlegend: false,
-            plot_bgcolor: 'rgba(0,0,0,0)',
-            margin: { l: 60, r: 20, t: 20, b: 60 },
-            font: { size: 14 }
-        };
-        
-        console.log('SimulationPage: About to create algorithm plot 3 (residuals Q-Q)');
-        Plotly.newPlot('algorithm-plot-3', traces, layout, { responsive: true });
-        console.log('SimulationPage: Algorithm plot 3 created successfully');
-        
-    } catch (error) {
-        console.error('SimulationPage: Error rendering algorithm plot 3:', error);
-    }
-}
+            try {
+                const algorithmData = this.scenarioData.norming_results[this.currentAlgorithm];
+                const rawData = this.scenarioData.raw_data;
+                const patientStatus = rawData.patient_status; // NEW: Get patient status
+                
+                const sites = [0, 1, 2]; 
+                const zScores = algorithmData.z_scores;
+                const siteArray = rawData.site;
+                
+                const traces = [];
+                
+                // Add histogram and KDE for each site (ALL subjects - controls + patients)
+                sites.forEach((site, i) => {
+                    const mask = siteArray.map(s => s === site);
+                    const siteZScores = zScores.filter((score, idx) => mask[idx]);
+                    const color = this.colors[i % this.colors.length];
+                    
+                    if (siteZScores.length === 0) return;
+                    
+                    // Add histogram (includes all subjects)
+                    traces.push({
+                        x: siteZScores,
+                        name: String(site),
+                        type: 'histogram',
+                        nbinsx: 20,
+                        opacity: 0.6,
+                        marker: { color: color },
+                        histnorm: 'probability density',
+                        showlegend: false
+                    });
+                    
+                    // Calculate and add KDE curve (simplified version)
+                    if (siteZScores.length > 1) {
+                        const sortedScores = [...siteZScores].sort((a, b) => a - b);
+                        const min = sortedScores[0];
+                        const max = sortedScores[sortedScores.length - 1];
+                        const range = max - min;
+                        const bandwidth = range / 10;
+                        
+                        const xRange = [];
+                        const kdeValues = [];
+                        
+                        for (let x = min - range * 0.2; x <= max + range * 0.2; x += range / 100) {
+                            xRange.push(x);
+                            let density = 0;
+                            
+                            siteZScores.forEach(score => {
+                                const gaussian = Math.exp(-0.5 * Math.pow((x - score) / bandwidth, 2)) / 
+                                            (bandwidth * Math.sqrt(2 * Math.PI));
+                                density += gaussian;
+                            });
+                            
+                            kdeValues.push(density / siteZScores.length);
+                        }
+                        
+                        traces.push({
+                            x: xRange,
+                            y: kdeValues,
+                            mode: 'lines',
+                            name: `${site}_kde`,
+                            line: { color: color, width: 4 },
+                            showlegend: false,
+                            type: 'scatter'
+                        });
+                    }
+                });
+                
+                // Add RUG PLOT for patients (markers at bottom)
+                sites.forEach((site, i) => {
+                    const mask = siteArray.map((s, idx) => s === site && patientStatus[idx] === 1); // Only patients
+                    const patientZScores = zScores.filter((score, idx) => mask[idx]);
+                    
+                    if (patientZScores.length > 0) {
+                        const darkerColor = this.darkenColor(this.colors[i % this.colors.length], 0.4);
+                        
+                        traces.push({
+                            x: patientZScores,
+                            y: Array(patientZScores.length).fill(0), // At y=0 (bottom of plot)
+                            mode: 'markers',
+                            name: `${site}_patients`,
+                            type: 'scatter',
+                            marker: {
+                                symbol: 'x', // Vertical tick marks
+                                size: 12,
+                                color: darkerColor,
+                                line: { width: 2, color: darkerColor }
+                            },
+                            showlegend: false,
+                            hovertemplate: `<b>Site ${site} (Patient)</b><br>Z-Score: %{x}<extra></extra>`
+                        });
+                    }
+                });
+                
+                const layout = {
+                    xaxis: { title: 'Z-Score', showgrid: true, gridcolor: 'lightgrey' },
+                    yaxis: { title: 'Density', showgrid: true, gridcolor: 'lightgrey' },
+                    hovermode: 'closest',
+                    showlegend: false,
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    margin: { l: 60, r: 20, t: 20, b: 60 },
+                    font: { size: 14 },
+                    barmode: 'overlay'
+                };
+                
+                console.log('SimulationPage: About to create algorithm plot 2 (z-scores)');
+                Plotly.newPlot('algorithm-plot-2', traces, layout, { responsive: true });
+                console.log('SimulationPage: Algorithm plot 2 created successfully');
+                
+            } catch (error) {
+                console.error('SimulationPage: Error rendering algorithm plot 2:', error);
+            }
+        }
 
+        renderAlgorithmPlot3() {
+            console.log('SimulationPage: Starting algorithm plot 3 render (residuals Q-Q plot)');
+            
+            try {
+                const algorithmData = this.scenarioData.norming_results[this.currentAlgorithm];
+                const rawData = this.scenarioData.raw_data;
+                const qqData = algorithmData.qq_data;
+                const patientStatus = qqData.patient_status;
+                
+                // Filter out null and 'nan' values from sites
+                const sitesData = qqData.sites.filter(x => x !== null && x !== 'nan' && x !== undefined);
+                const uniqueSites = [...new Set(sitesData)];
+                
+                const theoretical = qqData.theoretical;
+                const sample = qqData.sample;
+                const sitesArray = qqData.sites;
+                
+                // Get identity line coordinates (first two elements)
+                const lineX = qqData.identity_line.x.slice(0, 2);
+                const lineY = qqData.identity_line.y.slice(0, 2);
+                
+                const traces = [];
+                
+                // Add scatter points for each site - CONTROLS FIRST
+                uniqueSites.forEach((site) => {
+                    const siteIndex = parseInt(site); // Get actual site number
+                    const mask = sitesArray.map((s, idx) => s === site && patientStatus[idx] === 0); // Only controls
+                    const siteTheoretical = theoretical.filter((val, idx) => mask[idx]);
+                    const siteSample = sample.filter((val, idx) => mask[idx]);
+                    const color = this.colors[siteIndex % this.colors.length]; // ← Use siteIndex instead of i
+                    
+                    traces.push({
+                        x: siteTheoretical,
+                        y: siteSample,
+                        mode: 'markers',
+                        name: `${site} (Control)`,
+                        type: 'scatter',
+                        marker: {
+                            size: 8,
+                            color: color,
+                            opacity: 0.6,
+                            symbol: 'circle',
+                            line: { width: 0.5, color: 'white' }
+                        },
+                        hovertemplate: `<b>Site: ${site} (Control)</b><br>Theoretical: %{x}<br>Sample: %{y}<extra></extra>`
+                    });
+                });
+
+                // Add scatter points for PATIENTS (darker colors, bigger crosses)
+                uniqueSites.forEach((site) => {
+                    const siteIndex = parseInt(site); // Get actual site number
+                    const mask = sitesArray.map((s, idx) => s === site && patientStatus[idx] === 1); // Only patients
+                    const siteTheoretical = theoretical.filter((val, idx) => mask[idx]);
+                    const siteSample = sample.filter((val, idx) => mask[idx]);
+                    
+                    if (siteTheoretical.length > 0) {
+                        const darkerColor = this.darkenColor(this.colors[siteIndex % this.colors.length], 0.4); // ← Use siteIndex
+                        
+                        traces.push({
+                            x: siteTheoretical,
+                            y: siteSample,
+                            mode: 'markers',
+                            name: `${site} (Patient)`,
+                            type: 'scatter',
+                            marker: {
+                                size: 12,
+                                color: darkerColor,
+                                opacity: 1,
+                                symbol: 'x',
+                                line: { width: 2, color: darkerColor }
+                            },
+                            hovertemplate: `<b>Site: ${site} (Patient)</b><br>Theoretical: %{x}<br>Sample: %{y}<extra></extra>`
+                        });
+                    }
+                });
+                
+                // Add identity lines for each site (with offsets)
+                uniqueSites.forEach((site, groupIdx) => {
+                    const siteOffset = groupIdx * 1.0 - 2;
+                    const identityX = [...lineX];
+                    const identityY = lineY.map(y => y + siteOffset);
+                    
+                    traces.push({
+                        x: identityX,
+                        y: identityY,
+                        mode: 'lines',
+                        name: `${site} identity`,
+                        type: 'scatter',
+                        line: {
+                            color: '#afafaf',
+                            dash: 'dash',
+                            width: 2
+                        },
+                        opacity: 1,
+                        showlegend: false,
+                        hovertemplate: `Identity line<br>Site: ${site}<extra></extra>`
+                    });
+                });
+                
+                const layout = {
+                    xaxis: { title: 'Theoretical Quantiles', showgrid: true, gridcolor: 'lightgrey' },
+                    yaxis: { title: 'Sample Quantiles (Residuals)', showgrid: true, gridcolor: 'lightgrey' },
+                    hovermode: 'closest',
+                    showlegend: false,
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    margin: { l: 60, r: 20, t: 20, b: 60 },
+                    font: { size: 14 }
+                };
+                
+                console.log('SimulationPage: About to create algorithm plot 3 (residuals Q-Q)');
+                Plotly.newPlot('algorithm-plot-3', traces, layout, { responsive: true });
+                console.log('SimulationPage: Algorithm plot 3 created successfully');
+                
+            } catch (error) {
+                console.error('SimulationPage: Error rendering algorithm plot 3:', error);
+            }
+        }
 
     }
     
