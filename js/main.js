@@ -46,7 +46,7 @@ class App {
                     class="logo-image" 
                     onclick="window.open('https://predictiveclinicalneuroscience.com/', '_blank')">
                 <div class="logo-text">
-                    <h1>Cognitive Models</h1>
+                    <h1>Cognitive Reference Charts</h1>
                     <p>Normative Analysis Dashboard</p>
                 </div>
             `;
@@ -96,7 +96,7 @@ class App {
     async showIntroduction() {
         this.currentPage = 'introduction';
         this.updateHeader('Welcome to Cognitive Normative Models', 
-                         'Explore interactive visualizations of cognitive assessment normative data with demographic harmonization');
+                         'Explore interactive visualizations of different norming techniques and create cognitive reference charts through normative modeling');
         this.hideControls();
         
         try {
