@@ -1,11 +1,12 @@
 <div class="intro-content">
   <h2>About This Dashboard</h2>
   <p>
-    This interactive dashboard presents <strong>Cognitive Growth Charts</strong>, a new method for establishing 
+    This interactive dashboard presents <strong>Cognitive Reference Charts</strong>, a new method for establishing 
     cognitive norms. It highlights and clarifies the differences among methods used in the past and present to derive 
-    these norms, including binning, linear regression, and the Hierarchical Bayesian method (HBR). HBR can account for 
-    both nonlinear and non-Gaussian relationships, as well as differences in demographic variables (such as age, sex, 
-    and site), and provides improved standardized reference cohorts for cognitive assessments. For more information on 
+    these norms, including binning, linear regression, and a Hierarchical Bayesian Regression method (HBR). 
+    You can choose to simulate the data and see how the HBR method performs or look into the pre-estimated normative models on real cognitive data. In general, HBR can account for 
+    both non-linear and non-Gaussian relationships, as well as differences in demographic variables (such as age, sex, 
+    and site-effects). through the HBR method we provide an improved standardized reference chart for cognitive assessments. For more information on 
     the project, see <a href="https://precognition-project.org/" target="_blank" rel="noopener">PRECOGNITION</a> and the 
     paper <a href="https://academic.oup.com/schizbullopen/article/6/1/sgaf007/8109912" target="_blank" rel="noopener">
       Learning Latent Profiles via Cognitive Growth Charting in Psychosis: Design and Rationale for the PRECOGNITION Project
@@ -19,7 +20,7 @@
 
   <p>You can adjust several parameters that often occur in real-world data:</p>
   <ul>
-    <li><b>Site effects</b>: differences in results due to data being collected at different locations.</li>
+    <li><b>Site effects</b>: differences in results due to data being collected at different locations, cultural factors, etc.</li>
     <li><b>Heteroscedasticity</b>: when the variability of data points changes across values (e.g., scores change with age).</li>
     <li><b>Distribution shape</b>: whether the data follow a <i>normal</i> (bell-shaped), <i>skewed</i> (shifted to one side), 
         or <i>kurtotic</i> (more peaked or flat than normal) distribution.</li>
@@ -27,22 +28,22 @@
 
   <p>The raw data are then visualized using:</p>
   <ul>
-    <li><b>Scatter plots</b>: show the relationship between age and cognitive score.</li>
-    <li><b>Distribution plots</b>: show how scores are spread out across participants.</li>
+    <li><b>Scatter plots</b>: show the relationship between age and a cognitive score.</li>
+    <li><b>Distribution plots</b>: show how the scores are spread out across participants.</li>
     <li><b>Q-Q plots</b>: compare the observed data to a theoretical distribution to check normality.</li>
   </ul>
 
   <p>Afterwards you can apply different modeling algorithms to the data to make them normally distributed:</p>
   <ul>
     <li><b>10-Year Bins</b>: groups ages into 10-year intervals and calculates averages.</li>
-    <li><b>5-Year Bins</b>: similar to 10-year bins but with finer resolution.</li>
-    <li><b>LOESS</b>: a smoothing method that fits flexible curves to the data.</li>
-    <li><b>HBR</b> (Hierarchical Bayesian Regression): a statistical model that accounts for variation across sites and produces centile curves.</li>
+    <li><b>5-Year Bins</b>: similar to 10-year bins but with a finer resolution.</li>
+    <li><b>LOESS</b>: a smooth regression method that fits flexible curves to the data.</li>
+    <li><b>HBR</b> (Hierarchical Bayesian Regression): a statistical bayesian model that accounts for variation across sites and produces both mean scores as well as centile curves.</li>
   </ul>
 
   <p>The algorithm results are displayed through:</p>
   <ul>
-    <li><b>Regression or centile curves</b>: fitted lines showing trends or (per)centiles.</li>
+    <li><b>Regression or centile curves</b>: fitted lines showing mean trends or (per)centiles.</li>
     <li><b>Pseudo z-score distributions</b>: standardized scores showing how individuals compare to the norm.</li>
     <li><b>Residual Q-Q plots</b>: check whether the model’s errors (residuals) follow the expected distribution.</li>
   </ul>

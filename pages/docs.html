@@ -1,31 +1,55 @@
 <div class="intro-content">
     <h3>Methodology</h3>
-    <p>Our normative models were developed using advanced statistical techniques including:</p>
-    <p>• <strong>Generalized Additive Models (GAMs):</strong> For capturing non-linear age effects</p>
-    <p>• <strong>Multiple Regression:</strong> For modeling demographic predictors</p>
-    <p>• <strong>Quantile Regression:</strong> For generating percentile-based norms</p>
-    <p>• <strong>Cross-validation:</strong> For model validation and parameter optimization</p>
-    
+    <p>
+        The normative models were implemented using the HBR framework from PCNtoolkit (v1.1.2). Cognitive measures were modeled as nonlinear functions of age using B-spline basis functions, while sex and site were included as batch-effect covariates.
+    </p>
+
+    <p>• <strong>Hierarchical Bayesian Regression (HBR):</strong> Hierarchical normative modeling with centile estimation</p>
+
+    <p>• <strong>B-spline Modeling:</strong> Flexible nonlinear modeling of age-related cognitive trajectories</p>
+
+    <p>• <strong>Batch Effect Correction:</strong> Site and sex modeled as random intercept effects</p>
+
+    <p>• <strong>Bayesian Sampling:</strong> Models fitted using PyMC with NUTS sampling (2 chains, 1500 posterior samples)</p>
+
+    <p>• <strong>Model Evaluation:</strong> Performance assessed using train/test splits, Q-Q plots, R², RMSE, MAE, skewness, and kurtosis metrics</p>
+        
     <h3>Data Sources</h3>
-    <p>The normative data is derived from a comprehensive dataset of cognitive assessments from healthy participants across multiple research sites. All data has been anonymized and aggregated to protect participant privacy while maintaining statistical power.</p>
-    <p><strong>Sample Characteristics:</strong></p>
-    <p>• Age range: 18-90 years</p>
-    <p>• Education: 8-25 years</p>
-    <p>• Sex balanced samples</p>
-    <p>• Multiple cultural and linguistic backgrounds</p>
+
+    <p>
+        The normative reference charts were developed using a large aggregated cognitive dataset spanning the human lifespan. The current dataset (7th of May 2026) includes 14,421 healthy participants aged 5.0 to 100 years collected across multiple large-scale research cohorts.
+    </p>
+
+    <p><strong>Included datasets:</strong></p>
+
+    <p>• <strong>HCP1200:</strong> N = 1,206, ages 22–37 years, 54% female</p>
+
+    <p>• <strong>HCP Aging:</strong> N = 720, ages 36–100 years, 56% female</p>
+
+    <p>• <strong>HCP Development:</strong> N = 641, ages 5.0–21.9 years, 54% female</p>
+
+    <p>• <strong>ABCD Study:</strong> N = 11,854, ages 8–11 years, 48% female</p>
+
+    <p>
+        All data were anonymized and harmonized across sites prior to normative modeling to preserve participant privacy.
+    </p>
     
-    <h3>Model Validation</h3>
-    <p>Each normative model underwent rigorous validation using:</p>
-    <p>• <strong>Cross-validation:</strong> 10-fold cross-validation for all models</p>
-    <p>• <strong>Independent test sets:</strong> 20% holdout samples for final validation</p>
-    <p>• <strong>External validation:</strong> Testing on independent research cohorts</p>
-    <p>• <strong>Clinical validation:</strong> Comparison with known clinical groups</p>
-    
-    <h3>Chart Descriptions</h3>
-    <p><strong>Age vs Performance:</strong> Displays the relationship between participant age and raw cognitive performance scores. Shows age-related changes and identifies optimal age ranges for each measure.</p>
-    <p><strong>Education vs Performance:</strong> Illustrates how years of formal education correlate with cognitive performance, helping account for educational effects in normative scoring.</p>
-    <p><strong>Model Residuals:</strong> Shows the residuals from the fitted normative model, helping identify potential outliers or model limitations. Well-fitted models show randomly distributed residuals.</p>
-    <p><strong>Predicted vs Actual:</strong> Compares model predictions against observed scores. Points along the diagonal indicate good model fit, while deviations suggest areas for model improvement.</p>
+   <h3>Chart Descriptions</h3>
+    <p>
+        <strong>Raw Score vs Age:</strong> Displays observed cognitive scores across the lifespan for each dataset before harmonization.
+    </p>
+
+    <p>
+        <strong>Harmonized Score vs Age with Centiles:</strong> Shows normative trajectories after HBR harmonization, including estimated centile curves across age.
+    </p>
+
+    <p>
+        <strong>Q-Q Plot:</strong> Evaluates how closely the standardized scores follow a normal distribution across datasets.
+    </p>
+
+    <p>
+        <strong>Z-Score Distribution:</strong> Displays the distribution of HBR harmonized deviation scores for each dataset.
+    </p>
     
     <h3>Technical Implementation</h3>
     <p>This dashboard uses modern web technologies for optimal performance:</p>
