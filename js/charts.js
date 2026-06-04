@@ -8,12 +8,31 @@ class ChartManager {
         this.highlightedSubject = null;
         this.charts = new Map();
         this.colors = ['#39c0ba', '#f35b6a', '#fbb2b9', '#e2e7ee', '#2e3037'];
+        // Fixed color map: each site always gets the same color across all scales
+        this.siteColors = {
+            'ABCD':             '#39c0ba',
+            'HCP1200':          '#f35b6a',
+            'HCP_aging':        '#f5a623',
+            'HCP_dev':          '#7b68ee',
+            'HCP_psychosis':    '#2e3037',
+        };
+        this.fallbackColors = ['#39c0ba', '#f35b6a', '#f5a623', '#7b68ee', '#2e3037'];
         this.chartConfig = {
             chart1: { title: 'Raw Score vs Age', containerId: 'chart1' },
             chart2: { title: 'Harmonized Score vs Age with Centiles', containerId: 'chart2' },
             chart3: { title: 'Q-Q Plot', containerId: 'chart3' },
             chart4: { title: 'Z-Score Distribution', containerId: 'chart4' }
         };
+    }
+
+    /**
+     * Get a consistent color for a site name
+     * @param {string} site - Site name
+     * @param {number} fallbackIndex - Index used if site not in map
+     * @returns {string} Hex color string
+     */
+    getSiteColor(site, fallbackIndex = 0) {
+        return this.siteColors[site] || this.fallbackColors[fallbackIndex % this.fallbackColors.length];
     }
 
     /**
@@ -239,7 +258,7 @@ class ChartManager {
         
         sites.forEach((site, index) => {
             const siteData = chartData.sites_data[site];
-            const color = this.colors[index % this.colors.length];
+            const color = this.getSiteColor(site, index);
             
             traces.push({
                 x: siteData.map(d => d.Age),
@@ -323,7 +342,7 @@ class ChartManager {
         const sites = [...new Set(chartData.harmonized_data.map(d => d.Site))];
         sites.forEach((site, index) => {
             const siteData = chartData.harmonized_data.filter(d => d.Site === site);
-            const color = this.colors[index % this.colors.length];
+            const color = this.getSiteColor(site, index);
             
             traces.push({
                 x: siteData.map(d => d.Age),
@@ -373,7 +392,7 @@ class ChartManager {
         // Add data points
         sites.forEach((site, index) => {
             const siteData = chartData.sites_data[site];
-            const color = this.colors[index % this.colors.length];
+            const color = this.getSiteColor(site, index);
             
             traces.push({
                 x: siteData.map(d => d.theoretical),
@@ -445,7 +464,7 @@ class ChartManager {
         sites.forEach((site, index) => {
             const siteData = chartData.sites_data[site];
             const zScores = siteData.map(d => d.Z).filter(z => z !== null && z !== undefined);
-            const color = this.colors[index % this.colors.length];
+            const color = this.getSiteColor(site, index);
             
             if (zScores.length > 0) {
                 // Histogram
@@ -599,8 +618,8 @@ class ChartManager {
             if (element && element.data) {
                 element.data.forEach((trace, traceIndex) => {
                     if (trace.text && trace.marker) {
-                        // Reset to original colors/sizes
-                        const originalColor = this.colors[traceIndex % this.colors.length] || '#4f46e5';
+                        // Reset to original site color
+                        const originalColor = this.getSiteColor(trace.name, traceIndex);
                         const colors = new Array(trace.text.length).fill(originalColor);
                         const sizes = new Array(trace.text.length).fill(8);
                         
