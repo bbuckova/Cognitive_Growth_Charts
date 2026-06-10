@@ -310,30 +310,24 @@ class DataManager {
             return;
         }
         
+        const zipUrl = `data/${currentMeasure}_model.zip`;
+        
+        // check if zip exists first
         try {
-            // Fetch the actual model JSON file
-            const response = await fetch(`data/${currentMeasure}_model.json`);
-            
+            const response = await fetch(zipUrl, { method: 'HEAD' });
             if (!response.ok) {
-                throw new Error(`Model file not found: ${currentMeasure}_model.json`);
+                throw new Error(`Model zip not found`);
             }
-            
-            const modelData = await response.json();
-            
-            // Create blob and download
-            const jsonData = JSON.stringify(modelData, null, 2);
-            const blob = new Blob([jsonData], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${currentMeasure}_model.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            
         } catch (error) {
-            console.error('Error exporting model:', error);
-            alert(`Failed to export model: ${error.message}\n\nMake sure ${currentMeasure}_model.json exists in the data folder.`);
+            alert(`Model file not available for ${currentMeasure}.\n\nPlease contact the authors to request the model files.`);
+            return;
         }
+        
+        // trigger download
+        const a = document.createElement('a');
+        a.href = zipUrl;
+        a.download = `${currentMeasure}_model.zip`;
+        a.click();
     }
 
     /**
