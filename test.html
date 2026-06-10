@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head><title>JS Test</title></head>
+<body>
+    <h1>JavaScript Loading Test</h1>
+    <div id="test-results"></div>
+    
+    <script>
+    console.log('🧪 Test script running');
+    document.getElementById('test-results').innerHTML = 'JavaScript is working!';
+    </script>
+    
+    <script src="js/data.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/main.js"></script>
+    
+    <script>
+    setTimeout(() => {
+        console.log('🔍 Checking if classes exist:');
+        console.log('DataManager:', typeof DataManager);
+        console.log('ChartManager:', typeof ChartManager);
+        console.log('App:', typeof App);
+        console.log('dataManager instance:', typeof dataManager);
+        console.log('chartManager instance:', typeof chartManager);
+    }, 1000);
+    </script>
+</body>
+</html>

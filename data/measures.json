@@ -1,102 +1,72 @@
 [
   {
+    "id": "NIH_CardSort_RawScore",
+    "name": "NIH Card Sort",
+    "description": "Normative model for NIH Card Sort Raw Score"
+  },
+  {
     "id": "NIH_Flanker_RawScore",
-    "name": "NIH Flanker Raw Score",
+    "name": "NIH Flanker",
     "description": "Normative model for NIH Flanker Raw Score"
   },
   {
-    "id": "NIH_CogCrystalComp_RawScore",
-    "name": "NIH Cogcrystalcomp Raw Score",
-    "description": "Normative model for NIH Cogcrystalcomp Raw Score"
-  },
-  {
-    "id": "RAVLT_ShortDelay_III_TotalCorrect",
-    "name": "Ravlt Shortdelay Iii Totalcorrect",
-    "description": "Normative model for Ravlt Shortdelay Iii Totalcorrect"
-  },
-  {
-    "id": "NIH_CogTotalComp_RawScore",
-    "name": "NIH Cogtotalcomp Raw Score",
-    "description": "Normative model for NIH Cogtotalcomp Raw Score"
-  },
-  {
-    "id": "RAVLT_ShortDelay_B_TotalCorrect",
-    "name": "Ravlt Shortdelay B Totalcorrect",
-    "description": "Normative model for Ravlt Shortdelay B Totalcorrect"
-  },
-  {
-    "id": "NIH_CogEarlyComp_RawScore",
-    "name": "NIH Cogearlycomp Raw Score",
-    "description": "Normative model for NIH Cogearlycomp Raw Score"
-  },
-  {
-    "id": "NIH_CogFluidComp_RawScore",
-    "name": "NIH Cogfluidcomp Raw Score",
-    "description": "Normative model for NIH Cogfluidcomp Raw Score"
-  },
-  {
-    "id": "RAVLT_ShortDelay_I_TotalCorrect",
-    "name": "Ravlt Shortdelay I Totalcorrect",
-    "description": "Normative model for Ravlt Shortdelay I Totalcorrect"
-  },
-  {
-    "id": "NIH_PictureVocabulary_RawScore",
-    "name": "NIH Picturevocabulary Raw Score",
-    "description": "Normative model for NIH Picturevocabulary Raw Score"
-  },
-  {
-    "id": "RAVLT_ShortDelay_V_TotalCorrect",
-    "name": "Ravlt Shortdelay V Totalcorrect",
-    "description": "Normative model for Ravlt Shortdelay V Totalcorrect"
-  },
-  {
     "id": "NIH_ListSorting_RawScore",
-    "name": "NIH Listsorting Raw Score",
+    "name": "NIH List Sorting",
     "description": "Normative model for NIH Listsorting Raw Score"
   },
   {
-    "id": "RAVLT_ShortDelay_IV_TotalCorrect",
-    "name": "Ravlt Shortdelay Iv Totalcorrect",
-    "description": "Normative model for Ravlt Shortdelay Iv Totalcorrect"
-  },
-  {
-    "id": "RAVLT_ShortDelay_II_TotalCorrect",
-    "name": "Ravlt Shortdelay Ii Totalcorrect",
-    "description": "Normative model for Ravlt Shortdelay Ii Totalcorrect"
-  },
-  {
-    "id": "NIH_ProcSpeed_RawScore",
-    "name": "NIH Procspeed Raw Score",
-    "description": "Normative model for NIH Procspeed Raw Score"
-  },
-  {
-    "id": "RAVLT_ShortDelay_VII_TotalCorrect",
-    "name": "Ravlt Shortdelay Vii Totalcorrect",
-    "description": "Normative model for Ravlt Shortdelay Vii Totalcorrect"
-  },
-  {
     "id": "NIH_OralReadingRecog_RawScore",
-    "name": "NIH Oralreadingrecog Raw Score",
+    "name": "NIH Oral Reading Recognition",
     "description": "Normative model for NIH Oralreadingrecog Raw Score"
   },
   {
     "id": "NIH_PicSeq_RawScore",
-    "name": "NIH Picseq Raw Score",
+    "name": "NIH Picture Sequence",
     "description": "Normative model for NIH Picseq Raw Score"
+  },
+    {
+    "id": "NIH_PictureVocabulary_RawScore",
+    "name": "NIH Picture Vocabulary",
+    "description": "Normative model for NIH Picturevocabulary Raw Score"
+  },
+  {
+    "id": "NIH_ProcSpeed_RawScore",
+    "name": "NIH Processing Speed",
+    "description": "Normative model for NIH Procspeed Raw Score"
+  },
+  {
+    "id": "RAVLT_ShortDelay_I_TotalCorrect",
+    "name": "Ravlt Shortdelay I",
+    "description": "Normative model for Ravlt Shortdelay I Totalcorrect"
+  },
+  {
+    "id": "RAVLT_ShortDelay_II_TotalCorrect",
+    "name": "Ravlt Shortdelay II",
+    "description": "Normative model for Ravlt Shortdelay Ii Totalcorrect"
+  },
+  {
+    "id": "RAVLT_ShortDelay_III_TotalCorrect",
+    "name": "Ravlt Shortdelay III",
+    "description": "Normative model for Ravlt Shortdelay Iii Totalcorrect"
+  },
+  {
+    "id": "RAVLT_ShortDelay_IV_TotalCorrect",
+    "name": "Ravlt Shortdelay IV",
+    "description": "Normative model for Ravlt Shortdelay Iv Totalcorrect"
+  },
+  {
+    "id": "RAVLT_ShortDelay_V_TotalCorrect",
+    "name": "Ravlt Shortdelay V",
+    "description": "Normative model for Ravlt Shortdelay V Totalcorrect"
+  },
+  {
+    "id": "RAVLT_ShortDelay_B_TotalCorrect",
+    "name": "Ravlt Shortdelay B",
+    "description": "Normative model for Ravlt Shortdelay B Totalcorrect"
   },
   {
     "id": "RAVLT_ShortDelay_VI_TotalCorrect",
-    "name": "Ravlt Shortdelay Vi Totalcorrect",
+    "name": "Ravlt Shortdelay VI",
     "description": "Normative model for Ravlt Shortdelay Vi Totalcorrect"
-  },
-  {
-    "id": "NIH_CardSort_RawScore",
-    "name": "NIH Card Sort Raw Score",
-    "description": "Normative model for NIH Card Sort Raw Score"
-  },
-  {
-    "id": "RAVLT_ShortDelay_TotalCorrect",
-    "name": "Ravlt Shortdelay Totalcorrect",
-    "description": "Normative model for Ravlt Shortdelay Totalcorrect"
   }
 ]

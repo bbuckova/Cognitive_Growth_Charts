@@ -206,10 +206,13 @@ class ChartManager {
             console.log('🔗 About to add event listener...');
             
             try {
-                updateButton.addEventListener('click', () => {
+                if (!updateButton._listenerAdded) {
+                    updateButton._listenerAdded = true;
+                    updateButton.addEventListener('click', () => {
                     console.log('🔘 UPDATE BUTTON CLICKED!');
                     
-                    const newSex = isNaN(sexFilter.value) ? sexFilter.value : Number(sexFilter.value);
+                    // const newSex = isNaN(sexFilter.value) ? sexFilter.value : Number(sexFilter.value);
+                    const newSex = String(sexFilter.value);;
                     const newSite = siteFilter.value;
                     
                     console.log('Selected filters:', { newSex, newSite });
@@ -227,7 +230,7 @@ class ChartManager {
                         console.log('✅ Filter update complete');
                     });
                 });
-                
+            }
                 console.log('✅ Event listener added successfully');
                 
             } catch (eventError) {
@@ -396,7 +399,7 @@ class ChartManager {
             
             traces.push({
                 x: siteData.map(d => d.theoretical),
-                y: siteData.map(d => d.Z),
+                y: siteData.map(d => d.Z - (d.offset || 0)),  // ← add offset
                 mode: 'markers',
                 type: 'scatter',
                 name: site,
@@ -439,7 +442,7 @@ class ChartManager {
                 zerolinecolor: 'rgba(189, 195, 199, 0.8)'
             },
             yaxis: {
-                title: 'Z-Score',
+                title: 'Z-Score <br>(offsetted accross sites for clarity)',
                 showgrid: true,
                 gridwidth: 1,
                 gridcolor: 'rgba(189, 195, 199, 0.5)',
