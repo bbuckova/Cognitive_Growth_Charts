@@ -1,8 +1,195 @@
 <div class="intro-content">
-    <h3>How to use</h3>
-     <p>
-        Here goes the content of the tutorial
-    </p>
+    <h2>How to use the cognitive reference charts?</h2>
+     <p> The website has been built to allow the utilization of the cognitive reference charts by anyone as a reference model for their own data. Reference charts are particularly beneficial when the sample size of your data is too small to create your own model. 
+         The normative models for each cognitive variable can be downloaded and used to transfer or extend the model with your data. In this tutorial, we will focus on the transfer framework, you can find more information in the <a href="https://pcntoolkit.readthedocs.io/en/dev/tutorials/06_transfer_extend.html" target="_blank" rel="noopener">pcntoolkit tutorial</a>. 
+         The transfer approach allows for the creation of new local norms. This method derives a new local normative model on the new dataset from the trained normative model without refitting the parameters of the existing sites.
+     </p>
+    
+     <h3>Step by step:e</h3>   
+    <ol>
+        <li><b>Export the model</b></li>
+        <p> The trained normative model can be exported at the top of each page by clicking on “Export Model”. This will download a folder that contains the model parameters.
+        </p>
+        
+        <li><b>Install the PCN toolkit</b></li>
+        <p> All the information to install and set up the pcntoolkit package is available on the <a href="https://pcntoolkit.readthedocs.io/en/stable/" target="_blank" rel="noopener">online tutorial</a>.
+        </p>
+        
+        <li><b>Load the trained model from the cognitive reference chart</b></li>
+        <p> Load the trained normative model in your environment and extract the exact names for each variable.
+        </p>
+        <pre>
+            <code>
+                fitted_model= = NormativeModel.load("/Downloads/NIH_Flanker_RawScore_model")
+                
+                # Extract model configuration: batch effects (e.g. site, sex), covariates (e.g. age), and response variables (brain measures predicted by the model)
+                fitted_batch_effects = list(fitted_model.unique_batch_effects.keys())
+                fitted_covariates = fitted_model.covariates
+                fitted_response_vars = fitted_model.response_vars
+            </code>
+        </pre>
+        
+        <li><b>Configure the HBR model</b></li>
+        <p> Here, you need to use the same model that was used to fit the trained model. You can check the scripts used on the <a href="https://github.com/bbuckova/Precognition_scripts" target="_blank" rel="noopener">github</a>.
+        </p>
+         <pre>
+            <code>
+                #Configure the hbr model
+                mu = make_prior(
+                linear=True,
+                slope=make_prior(dist_name="Normal", dist_params=(0.0, 10.0)),
+                intercept=make_prior(
+                    random=True,
+                    mu=make_prior(dist_name="Normal", dist_params=(0.0, 1.0)),
+                    sigma=make_prior(dist_name="Normal", dist_params=(0.0, 1.0), mapping="softplus", mapping_params=(0.0, 3.0)),
+                ),
+                basis_function=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
+                )
+                
+                sigma = make_prior(
+                linear=True,
+                slope=make_prior(dist_name="Normal", dist_params=(0.0, 2.0)),
+                intercept=make_prior(dist_name="Normal", dist_params=(1.0, 1.0)),
+                basis_function=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
+                mapping="softplus",
+                mapping_params=(0.0, 3.0),
+                )
+
+                likelihood = NormalLikelihood(mu, sigma)
+
+                template_hbr = HBR(
+                    name="template",
+                    cores=16,
+                    progressbar=False,
+                    draws=1500,
+                    tune=500,
+                    chains=4,
+                    nuts_sampler="nutpie",
+                    likelihood=likelihood,
+                )
+            </code>
+        </pre>
+             
+        <li><b>Load your dataset</b></li>
+        <p> In order to extend or transfer the reference charts to your data, your data should be in the same format, with the same names for the variables and the same scale.
+        </p>
+        <pre>
+            <code>
+                #Prepare the new dateset
+                #load csv file
+                new_data = pd.read_csv('/project//new_dataset.csv', sep=';')
+                new_data.columns
+                
+                #Rename the site column or add site as a new column if your dataset does not contain different sites
+                new_data["Site"] = "site_new_data"
+                
+                #Change the name of covariates, batch effects and response variable to align with the trained model
+                new_data= new_data.rename(columns={'CogVariable': fitted_response_vars[0]})
+                
+                # Recode sex variable to match the format expected by the model (F/M instead of 0/1) 
+                new_data["Sex"] = new_data["Sex"].map({"F":0.0,"M":1.0})
+                
+                #Check the scale, for instance here the age for the reference charts is in months
+                new_data["Age"]=new_data["Age"]/12
+            </code>
+        </pre>
+             
+        <li><b>Create a NormData object</b></li>
+        <p> Make the new dataset into a NormData object (see the <a href="https://pcntoolkit.readthedocs.io/en/dev/tutorials/01_loading_data.html" target="_blank" rel="noopener">pcntoolkit tutorial</a> for more information).
+        </p>
+        <pre>
+            <code>
+                # specify the column names to use
+                covariates = ["Age"]
+                batch_effects = ["Sex","Site"]
+                response_vars = ["NIH_Flanker_RawScore"]
+                
+                #Make the new_data into a NormData object
+                norm_new_data = NormData.from_dataframe(
+                    name="New Dataset",
+                    dataframe=new_data,
+                    covariates=covariates,
+                    batch_effects=batch_effects,
+                    response_vars=response_vars,
+                    remove_outliers=True,
+                    z_threshold=10,
+                )
+                
+                norm_new_data.coords
+            </code>
+        </pre>
+
+        <li><b>Split the dataset into a train and a test samples</b></li>
+        <p> The decision on who to put in the train sample is important as you will not obtain the Z-scores for those individuals. Here, we propose two options:
+        </p>
+        <pre>
+            <code>
+                #Split the new dataset - basic function if your sample is homogenous
+                train_norm_new_data, test_norm_new_data = (norm_new_data.train_test_split())
+                
+                #Split the new dataset by hand if, for instance, you want the controls in the test dataset and the patients in the train dataset
+                #separate the patients (1) from the controls(0) before making the normdata object
+                patient_new_data = new_data[(new_data["Patient"] == 1)]
+                test_new_data = new_data[(new_data["Patient"] == 0)]
+                    
+                #make subsets into normdata objects
+                train_norm_new_data = NormData.from_dataframe(
+                    name="New Dataset",
+                    dataframe=test_new_data,
+                    covariates=covariates,
+                    batch_effects=batch_effects,
+                    response_vars=response_vars,
+                    remove_outliers=True,
+                    z_threshold=10,
+                )
+                test_norm_new_data = NormData.from_dataframe(
+                    name="New Dataset",
+                    dataframe=patient_new_data,
+                    covariates=covariates,
+                    batch_effects=batch_effects,
+                    response_vars=response_vars,
+                    remove_outliers=True,
+                    z_threshold=10,
+                )
+            </code>
+        </pre>
+             
+        <li><b>Transfer the data</b></li>
+        <p> You can now transfer the cognitive reference charts to your NormData dataset and visualize the results. 
+        </p>
+        <pre>
+            <code>
+                #transfer
+                transferred_with_new_data = fitted_model.transfer_predict(
+                    train_norm_new_data,
+                    test_norm_new_data,
+                    save_dir=(
+                        "/home/Downloads/transfer/"
+                    ),
+                );
+                
+                plot_centiles_advanced(
+                    transferred_with_new_data,
+                    scatter_data=train_norm_new_data,
+                    covariate_range=(5,100),
+                    batch_effects="all",
+                )
+            </code>
+        </pre>
+
+        <li><b>Get the Z-scores</b></li>
+        <p> Finally, you can extract your Z-scores from the train_norm_new_data object.
+        </p>
+        <pre>
+            <code>
+                train_norm_new = train_norm_new_data.to_dataframe()
+                train_norm_new['Z']
+            </code>
+        </pre>
+    </ol>
+
+
+    
 <footer class="site-footer">
   <p>
     <b>Cognitive Charts Dashboard</b> is open source software. 
