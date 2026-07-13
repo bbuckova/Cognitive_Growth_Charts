@@ -58,6 +58,7 @@ class App {
                 <a href="#" class="nav-item" onclick="app.showDocumentation()">Documentation</a>
                 <!-- <a href="#" class="nav-item" onclick="app.showSimulation()">Simulation</a> -->
                 <a href="#" class="nav-item" onclick="app.showAdvancedSimulation()">Simulation</a>
+                <a href="#" class="nav-item" onclick="app.showTutorial()">How to use</a>
             </div>
             
             <div class="nav-section">
@@ -225,6 +226,26 @@ class App {
         
         this.updateActiveNav('Simulation');
         this.updateURL('advanced_simulation');
+    }
+
+    /**
+     * Show tutorial page
+     */
+    async showTutorial() {
+        this.currentPage = 'tutorial';
+        this.updateHeader('How to use', 'Tutorial and recommendations for the use of Cognitive Normative Models');
+        this.hideControls();
+        
+        try {
+            const content = await this.loadPageContent('tutorial.html');
+            this.setContent(content);
+        } catch (error) {
+            // Fallback content if file doesn't exist
+            this.setContent(this.getDefaultDocsContent());
+        }
+        
+        this.updateActiveNav('How to use');
+        this.updateURL('tutorial');
     }
 
     /**
